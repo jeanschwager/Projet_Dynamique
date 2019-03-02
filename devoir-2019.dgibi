@@ -1,0 +1,555 @@
+************************************************************************
+*         MASTER MS2 5AG17 : DYNAMIQUE DES STRUCTURES II               *
+*                     DEVOIR PERSONNEL                                 *
+*                                                                      *
+*    REPONSE VIBRATOIRE D'UN NOUVEAU DESIGN                            *
+*    DE TUBE DE GENERATEUR DE VAPEUR                                   *
+*    AUX DIMENSIONS ET CARACTERISTIQUES FICTIVES                       *
+*    (Benoit Prabel, CEA,DEN,DM2S,SEMT,DYN)                            *
+*                                                                      *
+* PRENOM, NOM : Jean SCHWAGER                                          *
+* NUMERO D'ETUDIANT : 3303438                                          *
+*                                                                      *
+************************************************************************
+
+************************************************************************
+* OPTIONS ET PARAMETRES
+***********************************************************************
+
+* OPTIONS
+  OPTI DIME 3 ELEME SEG2 EPSI LINEAIRE;
+*OPTI TRAC PSC EPTR 5 POTR HELVETICA_16;
+
+* GEOMETRIE + CARACTERISTIQUES du TUBE
+  H = 10.;
+  R = 1.5;
+  DTUBE = 0.020;
+  eTUBE = 0.001;
+  EY1   = 2.E11;
+  NU1   = 0.3;
+  RHO1  = 8000.;
+  
+* nombre de plaques entretoises par branche
+  NPE   = 9;
+  
+* position des Barres Anti-Vibratoires
+  NBAV    = 4;
+  DTETBAV = 180. / (NBAV + 1);
+  TETABAV = PROG DTETBAV 'PAS' DTETBAV 'NPAS' (NBAV - 1);
+  
+* taille de maille
+  DEN1  = 0.05;
+
+  
+************************************************************************
+* MAILLAGE
+************************************************************************
+
+* DENSITE DE MAILLAGE
+  DENS DEN1;
+  
+* MESHPE  = points de Plaques Entretoises
+  MESHPE  = manu 'POI1' ;
+* MESHBAV = points des Barres Anti-Vibratoires
+  MESHBAV = manu 'POI1' ;
+  
+* MESH1 = BRANCHE FROIDE  
+  PSOL1 = 0. 0. 0.;
+  PTMP  = PSOL1;
+  MESH1 = PTMP;
+  DZ   = H / (NPE + 1);
+  VZ   = 0. 0. DZ;
+  iPE = 0;
+  REPE BCOLD NPE; iPE = iPE + 1;
+*   on cree les points PE1, PE2 ...   
+    PTMP = PTMP PLUS VZ;
+    NOMM (CHAI 'PE'iPE) PTMP;
+*   Plaques Entretoises
+    MESHPE = MESHPE et PTMP;
+*   on relie les points PSOL1 - PE1 - PE2 - ...   
+    MESH1 = MESH1 DROI PTMP;
+  FIN  BCOLD;
+* point final
+  PC1   = PTMP PLUS VZ;
+  MESH1 = MESH1 DROI PC1;
+  MESH1 = MESH1 COUL 'BLEU';
+  
+* MESH2 = BRANCHE CHAUDE  
+  PSOL2 = (2.*R) 0. 0.;
+  PTMP = PSOL2;
+  MESH2 = PTMP;
+  iPE = 2*NPE + 1;
+  REPE BHOT NPE; iPE = iPE - 1;
+*   on cree les points PE1, PE2 ...   
+    PTMP = PTMP PLUS VZ;
+    NOMM (CHAI 'PE'iPE) PTMP;
+*   Plaques Entretoises
+    MESHPE = MESHPE et PTMP;
+*   on relie les points PSOL1 - PE1 - PE2 - ...   
+    MESH2 = MESH2 DROI PTMP;
+  FIN  BHOT;
+* point final
+  PC2   = PTMP PLUS VZ;
+  MESH2 = MESH2 DROI PC2;   
+  MESH2 = MESH2 COUL 'ROUG';   
+  
+* MESH3 = CINTRE
+* centre
+  PCENTRE = R 0. H;
+* point d'excitation : PEX1
+  PEX1    = R 0. (H + R);
+*   TETAEX2 = 180. - 54.; 
+  TETAEX2 = 125.05263;  
+  SINEX2 = SIN TETAEX2; COSEX2 = COS TETAEX2;
+  PEX2    = PCENTRE PLUS (R * (COSEX2 0. SINEX2));  
+* on cree les points PBAV1, PBAV2, ... 
+  REPE BBAV NBAV;
+    TETATMP = EXTR TETABAV (NBAV - &BBAV + 1);
+    SINTMP  = SIN TETATMP; COSTMP = COS TETATMP;
+    PTMP    = PCENTRE PLUS (R * (COSTMP 0. SINTMP));
+    NOMM (CHAI 'PBAV'&BBAV) PTMP;
+    MESHBAV = MESHBAV et PTMP;
+  FIN  BBAV;
+* on relie les points
+  MESH3 = (CERC PC1   PCENTRE PBAV1) ET (CERC PBAV1 PCENTRE PEX2)
+       ET (CERC PEX2  PCENTRE PBAV2)
+       ET (CERC PBAV2 PCENTRE PEX1 ) ET (CERC PEX1  PCENTRE PBAV3) 
+       ET (CERC PBAV3 PCENTRE PBAV4) ET (CERC PBAV4 PCENTRE PC2  );
+  MESH3 = MESH3 COUL 'VIOL';
+  
+* ASSEMBLAGE ET TRACE
+  MESHTOT = MESH1 ET MESH3 ET (INVE MESH2);
+  EYE3D = 60. -130. 90.;
+  TRAC EYE3D (MESHTOT ET MESHPE ET MESHBAV);
+  
+  
+************************************************************************
+* MODELE ET MATERIAU
+************************************************************************
+
+* CALCUL DES CARACTERISTIQUES
+  RTUBE = 0.5*DTUBE;
+  RINT = RTUBE - eTUBE; 
+  DINT = DTUBE - (2.*eTUBE); 
+  S1    = pi * ((RTUBE**2) - (RINT**2));
+  Iny1  = pi * ((DTUBE**4) - (DINT**4)) / 64.;
+  Inx1  = pi * ((DTUBE**4) - (DINT**4)) / 32.;
+  
+* MODELE ET MATERIAU
+  MODTOT = MODE MESHTOT 'MECANIQUE' 'ELASTIQUE' 'ISOTROPE' 'TIMO';
+  MATTOT = MATE MODTOT 'YOUN' EY1 'NU' NU1 'RHO' RHO1
+                       'SECT' S1 'INRY' Iny1 'INRZ' Iny1 'TORS' Inx1;  
+  
+************************************************************************
+* MATRICES, CONDITIONS AUX LIMITES 
+************************************************************************
+
+  K1 = RIGI MODTOT MATTOT;
+  M1 = MASS MODTOT MATTOT;
+  
+* blocage au sol
+  BLO1 = BLOQ 'DEPL' 'ROTA' (PSOL1 ET PSOL2);
+  K1TOT = K1 ET BLO1;
+  
+* appui aux PE
+  BLO2 = BLOQ 'UX' MESHPE;
+  K2TOT = K1 ET BLO1 ET BLO2;
+     
+* Question 1 : 
+*     Quel type d'éléments est utilisés ? 
+* -->  Des éléments de type SEG2 (segement à deux neuds lineaire)
+*     Cela vous semble-t-il justifié ? 
+* --> theorie des poutre : 1D. donc éléments de type poutre
+*     espace d'évolution 2D : problème à deux dimensions
+*     Linéaire bien pour un premier calcul
+*     ce ne sont pas des barre (notre problème :travail en flexion)
+*     
+*     Combien d'éléments comporte le maillage fourni ? 
+  NBELTOT = NBEL MESHTOT;
+  MESS '--> il y a 'NBELTOT 'elements';
+*     Cela vous semble-t-il suffisant ? Comment pourrait-on le savoir ?
+* --> Cela me semble suffisant, cependant pour s'en assurer il faudrait faire une étude de convergeance. 
+
+* Question 2 : 
+*     Les points PE1, PE2, ... représentent les plaques entretoises 
+*     percées. Combien y en a t'il?
+* --> Il y en a 2 fois 9 soit 18.
+*     On choisit une modélisation de type "appui simple glissant". 
+*     Quels ddl bloquer ?
+* --> BLOQ UY
+
+* Question 3 : 
+*     Quel est le nom des points positionnés en face des 
+*     Barres Anti-Vibratoire ?
+* --> PBAV1, PBAV2, PBAV3, PBAV4
+
+  
+************************************************************************
+* CALCUL DES MODES PROPRES
+************************************************************************
+
+* Calcul des 40 premiers modes propres (base modale appuye aux PE)
+  NMOD1   = 40;
+  WSHIFT1 = 1.;  
+  TMOD1 = VIBR 'IRAM' WSHIFT1 NMOD1 K2TOT M1 'TBAS';
+  POSTVIBR TMOD1 'mail';
+  
+* Question 4: 
+*     Existe-t-il des modes doubles ? Lesquels ?
+* --> ...
+
+* Question 5: 
+*     Classez les 10 premiers modes selon qu'ils sont hors-plan ou plan.
+*  +--------+----------------+---------
+*  |  mode  | frequence (Hz) | Plan ou Hors Plan ?
+*  +--------+----------------+---------
+*  |    1   |  ...        | ...
+*  |    2   |  ...        | ...
+*  |    3   |  ...        | ...
+*  |    4   |  ...        | ...
+*  |    5   |  ...        | ...
+*  |    6   |  ...        | ...
+*  |    7   |  ...        | ...
+*  |    8   |  ...        | ...
+*  |    9   |  ...        | ...
+*  |   10   |  ...        | ...
+
+ 
+* Question 6: 
+*     Si du fluide au repos avait été présent à l'interieur du tube,
+*     quelle caractéristique matériau, aurait-on du modifier ?
+* --> ...
+*     Comment aurait alors varier les fréquences propres ?
+* --> ...
+
+ 
+************************************************************************
+* ANALYSE HARMONIQUE
+************************************************************************
+
+* Question 7 : 
+*     Rappelez l'équation d'équilibre dynamique discrétisée 
+*     en l'absence d'amortissement
+* --> ...
+
+* Question 8 : 
+*     Vu la forme particulière du chargement, donnez l'expression de la
+*     solution établie :
+* --> u(t) = ...
+
+* Question 9 : 
+*     Transformez en equation algebrique lineaire
+* --> ...
+
+* Question 10 : 
+*     Calculer l'évolution avec \Omega des réponses aux points PEX1 et
+*     PEX2 pour les deux chargements
+
+  F0 = 5.;
+* chargement harmonique en PEX1
+  FEX1 = FORC 'FY' F0 PEX1;
+* chargement harmonique en PEX2, normal au tube
+  FEX2 = FORC 'FX' (-1.*F0*(cos TETAEX2)) 
+              'FZ' (-1.*F0*(sin TETAEX2)) PEX2;
+  
+* frequences d'excitation  
+  prOMEGHZ = prog 0.1 PAS 0.1 50.;
+  prOMEG   = 2.*pi * prOMEGHZ;
+  nOMEG  = DIME prOMEG;
+* reponse a FEX1 :
+* - au point EX1 selon y
+    uy1_EX1 = prog;
+* - au point EX2 selon y
+    uy2_EX1 = prog;
+* reponse a FEX2 :
+* - au point EX1 selon x,z
+    ux1_EX2 = prog;  uz1_EX2 = prog;
+* - au point EX2 selon x,z
+    ux2_EX2 = prog;  uz2_EX2 = prog;
+
+* boucle sur les frequences d'excitation  
+  REPE BOMEG nOMEG;
+    OMEG = EXTR ... &BOMEG;
+    mess 'calcul pour OMEG='OMEG'rad/s';
+    ZHARM1 = K2TOT ET ... ; 
+*   reponse a FEX1 :
+    UHARM1 = RESO ZHARM1 FEX1;
+    uy1_EX1 = uy1_EX1 ET (EXTR UHARM1 'UY' PEX1);
+    uy2_EX1 = uy2_EX1 ET (EXTR UHARM1 'UY' PEX2);
+*   reponse a FEX2 :
+    UHARM2 = RESO ZHARM1 FEX2;
+    ux1_EX2 = ux1_EX2 ET (EXTR UHARM2 'UX' PEX1);
+    ux2_EX2 = ux2_EX2 ET (EXTR UHARM2 'UX' PEX2);
+    uz1_EX2 = uz1_EX2 ET (EXTR UHARM2 'UZ' PEX1);
+    uz2_EX2 = uz2_EX2 ET (EXTR UHARM2 'UZ' PEX2);
+  FIN  BOMEG;
+  
+* courbes
+  evy1_EX1 = EVOL BLEU MANU LEGE 'UY(EX1)_{1}' 
+            '\w (Hz)' prOMEGHZ '|u|' (abs uy1_EX1) ;
+  evy2_EX1 = EVOL AZUR MANU LEGE 'UY(EX2)_{1}' 
+            '\w (Hz)' prOMEGHZ '|u|' (abs uy2_EX1) ;
+  evx1_EX2 = EVOL ROUG MANU LEGE 'UX(EX1)_{2}' 
+            '\w (Hz)' prOMEGHZ '|u|' (abs ux1_EX2) ;
+  evx2_EX2 = EVOL ORAN MANU LEGE 'UX(EX2)_{2}' 
+            '\w (Hz)' prOMEGHZ '|u|' (abs ux2_EX2) ;
+  evz1_EX2 = EVOL VERT MANU LEGE 'UZ(EX1)_{2}' 
+            '\w (Hz)' prOMEGHZ '|u|' (abs uz1_EX2) ;
+  evz2_EX2 = EVOL TURQ MANU LEGE 'UZ(EX2)_{2}' 
+            '\w (Hz)' prOMEGHZ '|u|' (abs uz2_EX2) ;
+            
+  TITRE (chai 'ANALYSE HARMONIQUE lineaire');  
+  dess (evy1_EX1 et evy2_EX1) 'LOGY' LEGE;
+  dess (evx1_EX2 et evx2_EX2 et evz1_EX2 et evz2_EX2)'LOGY' LEGE;
+  dess (evy1_EX1 et evy2_EX1 et evx1_EX2 et evx2_EX2 et evz1_EX2
+     et evz2_EX2)'LOGY' LEGE;
+     
+* Question 11 : 
+*     Où se situent les pics de résonance pour le premier chargement ? 
+* --> ...
+*     pour le second ?
+* --> ...
+*     Expliquez les éventuelles différences
+* --> ...
+
+* Question 12 : 
+*     Est-il possible de donner immédiatement la réponse au chargement
+*     combiné F^1(t)+F^2(t) ? Justifiez.
+* --> ...
+*     Cela aurait-il été possible si les deux chargements n'étaient pas
+*     orthogonaux ?
+* --> ...
+
+
+************************************************************************
+* ANALYSE LINEAIRE PAR INTEGRATION TEMPORELLE SUR BASE MODALE
+************************************************************************
+
+* parametres temporels
+  wmax = (2.*pi*...); 
+  DTc  = ...;
+  DTe  = ...;
+  MESS 'dtc=' DTc ' --> dt=' DTe;
+  tfin = 2.1;
+  NPASe = (ENTI PROCH (tfin / DTe)) - 1;
+  NSORT = 2;
+
+* amortissement (en % ici)
+  xi1 = 5.;
+  TAMOR = TABL 'AMORTISSEMENT';
+  TAMOR . 'AMORTISSEMENT' = AMOR TMOD1 (prog NMOD1*xi1);
+  
+* chargement  
+  OMEGHZ = 15.4;
+  FEX1_P = PJBA FEX1 TMOD1;
+  pr_time = PROG 0. 'PAS' DTe 30.;
+  evex1  = EVOL MANU pr_time (sin (... * OMEGHZ * pr_time));
+  CHA1_P = CHAR FEX1_P evex1;
+  TCHAR = TABL 'CHARGEMENT';
+  TCHAR .'BASE_A' = CHA1_P;
+*   TCHAR .'BASE_A' = CHA1_P et CHA2_P;
+
+* Question 13 : 
+*     Combien de périodes de chargement ?
+  nPERIOD = ...;
+* -->  ...
+  dess evex1 XBOR 0. 0.2;
+  
+* Question 14 : 
+*     Quel type de schéma utilise \verb|DYNE| ? 
+* --> ...
+*     Est-il explicite ou implicite ?
+* --> ...
+*     Existe t-il une condition de stabilité ? Si oui, laquelle ?
+* --> ...
+
+* Question 15 : 
+*     Choisissez un pas de temps de calcul en le justifiant.
+* --> ...    
+       
+* Question 16 : 
+*      Réalisez le calcul et visualisez les évolutions temporelles
+* ---------------------------------------------
+* resolution par DYNE
+  TRESU = DYNE 'DIFFERENCES_CENTREES'  
+          TMOD1 TAMOR TCHAR NPASe DTe NSORT;
+* ---------------------------------------------
+ 
+* post traitement 
+  evux1 = EVOL 'ROUG' RECO TRESU TMOD1 'DEPL' PEX1 'UX';
+  evux2 = EVOL 'ORAN' RECO TRESU TMOD1 'DEPL' PEX2 'UX';
+  evuy1 = EVOL 'BLEU' RECO TRESU TMOD1 'DEPL' PEX1 'UY';
+  evuy2 = EVOL 'AZUR' RECO TRESU TMOD1 'DEPL' PEX2 'UY';
+  evuz1 = EVOL 'VERT' RECO TRESU TMOD1 'DEPL' PEX1 'UZ';
+  evuz2 = EVOL 'TURQ' RECO TRESU TMOD1 'DEPL' PEX2 'UZ';
+
+  TITRE (chai 'DYNE - Calcul lineaire - \Dt = 'DTe's - tfin=' tfin 's');
+  dess (evux1 et evux2 et evuy1 et evuy2 et evuz1 et evuz2) XBOR 0. 2.;
+  
+* Question 17 : 
+*     Calculez la transformée de Fourier du déplacement en PEX1 selon Y  
+  p= ...;
+  p = ENTI 'INFERIEUR' p;
+  TFuy1 = EXTR (TFR evuy1 p 'MOPH' 'FMAX' 50. 'BLEU') 'COUR' 'MODULE';
+  dess TFuy1 'LOGY';
+*
+* Question 17 : 
+* --> interpretation des pics :
+* --> ... Hz : ...
+*
+* --> les modes qui ne repondent pas sont :
+* --> ...
+
+* Question 18 : 
+*     Pourquoi n'y a t'il pas qu'1 seul pic et 1 seule harmonique ?
+* --> ...
+
+
+* Question 19 : 
+*     Recommencez le calcul avec tfin=29.9 (ci-après)
+*     et post-traitez le déplacement en PEX1 selon Y 
+*     (temporel + transformee de Fourier). 
+*     Que constatez-vous ?
+* --> ...
+
+  tfin = 29.9;
+  NPASe = (ENTI PROCH (tfin / DTe)) - 1;
+* ---------------------------------------------
+* resolution par DYNE
+  TRESU = DYNE 'DIFFERENCES_CENTREES' TMOD1 TAMOR TCHAR    
+          NPASe DTe NSORT;
+* ---------------------------------------------
+  evuy1 = EVOL 'BLEU' RECO TRESU TMOD1 'DEPL' PEX1 'UY';
+* on recupere la partie [14.95-29.9]s  
+  evuy1c = EXTR evuy1 'APRE' (0.5*tfin);
+  TITRE (chai 'DYNE - Calcul lineaire - \Dt = 'DTe's - tfin=' tfin 's');
+  dess evuy1c;
+  p= ...;
+  p = ENTI 'INFERIEUR' (p - 1.);
+  TFuy1c = EXTR (TFR evuy1c p 'MOPH' 'FMAX' 50. 'BLEU') 'COUR' 'MODULE';
+  dess TFuy1c 'LOGY';
+
+
+
+************************************************************************
+* ANALYSE NON-LINEAIRE PAR INTEGRATION TEMPORELLE
+************************************************************************
+
+* On etudie la reponse avec chocs sur les Barres AntiVibratoires 2 et 3
+* Les vibrations du cintre sont limitees par la presence de BAV de part
+* et d'autre du cintre.
+* vue de dessus :
+*  Y       
+*   |      ___BAV2+       ___BAV3+
+*   |     
+*      -----+--------------+----- cintre      --> X
+*         PBAV2          PBAV3 
+*          ___            ___
+*             BAV2-          BAV3-
+*
+* On utilise l'operateur DYNE 
+* Question 20 : 
+*       Complétez la definition de la condition unilaterale de choc
+
+* liaison BAV2+ :
+  TL1 = TABL 'LIAISON_ELEMENTAIRE';
+  TL1.'TYPE_LIAISON'        =  MOT 'POINT_PLAN' ;
+  TL1.'SUPPORT' = PBAV2;
+  TL1.'NORMALE' = ... ;
+  TL1.'RAIDEUR' = 1.E5;
+  TL1.'JEU'     = 0.5E-3;
+* liaison BAV2- :  
+  TL2 = TABL 'LIAISON_ELEMENTAIRE';
+  TL2.'TYPE_LIAISON'        =  MOT 'POINT_PLAN' ;
+  TL2.'SUPPORT' = PBAV2;
+  TL2.'NORMALE' = ... ;
+  TL2.'RAIDEUR' = 1.E5;
+  TL2.'JEU'     = 0.5E-3;
+* liaison BAV3+ :
+  TL3 = TABL 'LIAISON_ELEMENTAIRE';
+  TL3.'TYPE_LIAISON'        =  MOT 'POINT_PLAN' ;
+  TL3.'SUPPORT' = PBAV3;
+  TL3.'NORMALE' = ... ;
+  TL3.'RAIDEUR' = 1.E5;
+  TL3.'JEU'     = 0.5E-3;
+* liaison BAV3- :  
+  TL3 = TABL 'LIAISON_ELEMENTAIRE';
+  TL3.'TYPE_LIAISON'        =  MOT 'POINT_PLAN' ;
+  TL3.'SUPPORT' = PBAV3;
+  TL3.'NORMALE' = ... ;
+  TL3.'RAIDEUR' = 1.E5;
+  TL3.'JEU'     = 0.5E-3;
+  
+  TLIA_B = TABL 'LIAISON_B';
+  TLIA_B . 1 = TL1;
+  TLIA_B . 2 = TL2;
+  TLIA_B . 3 = TL3;
+  TLIA_B . 4 = TL4;
+  TLIAI = TABL LIAISON;
+  TLIAI . 'LIAISON_B' = TLIA_B;
+  
+* sortie  
+  TSORLB = TABL 'LIAISON_B';
+  TSORLB . TL1 = VRAI;
+  TSORLB . TL2 = VRAI;
+  TSORT = TABL 'SORTIE';
+  TSORT . 'LIAISON_B' = TSORLB;
+
+*---------------------------------------------
+* Boucle pour tester 2 pas de temps --------------------------------------------- 
+kfac = 1;
+REPE BDTe 2;
+
+* lors du 2eme passage, on calcule avec un pas de temps kfac plus petit, 
+* mais on sort kfac fois moins de pas
+  SI (EGA &BDTe 2);  kfac = 8;  FINSI;
+  TITRE (chai 'DYNE - Calcul avec BAV - \Dt = '(DTe/kfac)'s');
+
+*     Calcul + post traitement
+* ---------------------------------------------
+* resolution par DYNE
+  TRESU_NL = DYNE 'DIFFERENCES_CENTREES' TMOD1 TAMOR TCHAR  TLIAI TSORT 
+             (NPASe*kfac) (DTe/kfac) (NSORT*kfac);
+* ---------------------------------------------
+
+  evuy1NL = EVOL 'VIOL' RECO TRESU_NL TMOD1 'DEPL' PEX1 'UY';
+  dess (evuy1 et evuy1NL) ;
+  dess (evuy1 et evuy1NL) XBOR (tfin - 2.) tfin;
+  
+* on recupere la partie [14.95-29.9]s  
+  evuy1NLc = EXTR evuy1NL 'APRE' (0.5*tfin);
+* on fait la transformee de Fourier sur les dernieres 14.95 s
+  TFuy1NLc = EXTR (TFR ... p 'MOPH' 'FMAX' 50. 'VIOL')
+  'COUR' 'MODULE';
+  dess (TFuy1c et TFuy1NLc) 'LOGY';
+  
+* portrait de phase
+  evvy1NL = EVOL 'VIOL' RECO TRESU_NL TMOD1 'VITE' PEX1 'UY';
+  evvy1NLc = EXTR evvy1NL 'APRE' (0.5*tfin);
+  uvy1NL = EVOL 'VIOL' MANU 'DEPL' (EXTR evuy1NLc 'ORDO') 
+                            'VITE' (EXTR evvy1NLc 'ORDO');
+  dess uvy1NL; 
+  
+FIN BDTe  ;
+*---------------------------------------------
+
+* Question 21 : 
+*     Que constatez-vous ?
+* --> ...
+*     Le mouvement vous semble t'il periodique ?
+*     ...
+
+* Question 22 : 
+*     Recommencez avec un pas de temps divise par 8
+*     La réponse est-elle la meme ?
+* --> ...
+* --> ...
+*     Que concluez-vous sur le choix du pas de temps ?
+* --> ...
+
+
+opti trac X donn 5; 
+*FIN ;
+  
+  
+  

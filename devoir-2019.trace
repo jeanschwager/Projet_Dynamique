@@ -1,0 +1,626 @@
+ ************************************************************************ 
+ *         MASTER MS2 5AG17 : DYNAMIQUE DES STRUCTURES II               * 
+ *                     DEVOIR PERSONNEL                                 * 
+ *                                                                      * 
+ *    REPONSE VIBRATOIRE D'UN NOUVEAU DESIGN                            * 
+ *    DE TUBE DE GENERATEUR DE VAPEUR                                   * 
+ *    AUX DIMENSIONS ET CARACTERISTIQUES FICTIVES                       * 
+ *    (Benoit Prabel, CEA,DEN,DM2S,SEMT,DYN)                            * 
+ *                                                                      * 
+ * PRENOM, NOM : Jean SCHWAGER                                          * 
+ * NUMERO D'ETUDIANT : 3303438                                          * 
+ *                                                                      * 
+ ************************************************************************ 
+   
+ ************************************************************************ 
+ * OPTIONS ET PARAMETRES 
+ *********************************************************************** 
+   
+ * OPTIONS 
+   OPTI DIME 3 ELEME SEG2 EPSI LINEAIRE; 
+ *OPTI TRAC PSC EPTR 5 POTR HELVETICA_16; 
+   
+ * GEOMETRIE + CARACTERISTIQUES du TUBE 
+   H = 10.; 
+   R = 1.5; 
+   DTUBE = 0.020; 
+   eTUBE = 0.001; 
+   EY1   = 2.E11; 
+   NU1   = 0.3; 
+   RHO1  = 8000.; 
+   
+ * nombre de plaques entretoises par branche 
+   NPE   = 9; 
+   
+ * position des Barres Anti-Vibratoires 
+   NBAV    = 4; 
+   DTETBAV = 180. / (NBAV + 1); 
+   TETABAV = PROG DTETBAV 'PAS' DTETBAV 'NPAS' (NBAV - 1); 
+   
+ * taille de maille 
+   DEN1  = 0.05; 
+   
+   
+ ************************************************************************ 
+ * MAILLAGE 
+ ************************************************************************ 
+   
+ * DENSITE DE MAILLAGE 
+   DENS DEN1; 
+   
+ * MESHPE  = points de Plaques Entretoises 
+   MESHPE  = manu 'POI1' ; 
+ * MESHBAV = points des Barres Anti-Vibratoires 
+   MESHBAV = manu 'POI1' ; 
+   
+ * MESH1 = BRANCHE FROIDE 
+   PSOL1 = 0. 0. 0.; 
+   PTMP  = PSOL1; 
+   MESH1 = PTMP; 
+   DZ   = H / (NPE + 1); 
+   VZ   = 0. 0. DZ; 
+   iPE = 0; 
+   REPE BCOLD NPE; iPE = iPE + 1; 
+ *   on cree les points PE1, PE2 ... 
+     PTMP = PTMP PLUS VZ; 
+     NOMM (CHAI 'PE'iPE) PTMP; 
+ *   Plaques Entretoises 
+     MESHPE = MESHPE et PTMP; 
+ *   on relie les points PSOL1 - PE1 - PE2 - ... 
+     MESH1 = MESH1 DROI PTMP; 
+   FIN  BCOLD; 
+ * point final 
+   PC1   = PTMP PLUS VZ; 
+   MESH1 = MESH1 DROI PC1; 
+   MESH1 = MESH1 COUL 'BLEU'; 
+   
+ * MESH2 = BRANCHE CHAUDE 
+   PSOL2 = (2.*R) 0. 0.; 
+   PTMP = PSOL2; 
+   MESH2 = PTMP; 
+   iPE = 2*NPE + 1; 
+   REPE BHOT NPE; iPE = iPE - 1; 
+ *   on cree les points PE1, PE2 ... 
+     PTMP = PTMP PLUS VZ; 
+     NOMM (CHAI 'PE'iPE) PTMP; 
+ *   Plaques Entretoises 
+     MESHPE = MESHPE et PTMP; 
+ *   on relie les points PSOL1 - PE1 - PE2 - ... 
+     MESH2 = MESH2 DROI PTMP; 
+   FIN  BHOT; 
+ * point final 
+   PC2   = PTMP PLUS VZ; 
+   MESH2 = MESH2 DROI PC2; 
+   MESH2 = MESH2 COUL 'ROUG'; 
+   
+ * MESH3 = CINTRE 
+ * centre 
+   PCENTRE = R 0. H; 
+ * point d'excitation : PEX1 
+   PEX1    = R 0. (H + R); 
+ *   TETAEX2 = 180. - 54.; 
+   TETAEX2 = 125.05263; 
+   SINEX2 = SIN TETAEX2; COSEX2 = COS TETAEX2; 
+   PEX2    = PCENTRE PLUS (R * (COSEX2 0. SINEX2)); 
+ * on cree les points PBAV1, PBAV2, ... 
+   REPE BBAV NBAV; 
+     TETATMP = EXTR TETABAV (NBAV - &BBAV + 1); 
+     SINTMP  = SIN TETATMP; COSTMP = COS TETATMP; 
+     PTMP    = PCENTRE PLUS (R * (COSTMP 0. SINTMP)); 
+     NOMM (CHAI 'PBAV'&BBAV) PTMP; 
+     MESHBAV = MESHBAV et PTMP; 
+   FIN  BBAV; 
+ * on relie les points 
+   MESH3 = (CERC PC1   PCENTRE PBAV1) ET (CERC PBAV1 PCENTRE PEX2) 
+        ET (CERC PEX2  PCENTRE PBAV2) 
+        ET (CERC PBAV2 PCENTRE PEX1 ) ET (CERC PEX1  PCENTRE PBAV3) 
+        ET (CERC PBAV3 PCENTRE PBAV4) ET (CERC PBAV4 PCENTRE PC2  ); 
+   MESH3 = MESH3 COUL 'VIOL'; 
+   
+ * ASSEMBLAGE ET TRACE 
+   MESHTOT = MESH1 ET MESH3 ET (INVE MESH2); 
+   EYE3D = 60. -130. 90.; 
+   TRAC EYE3D (MESHTOT ET MESHPE ET MESHBAV); 
+   
+   
+ ************************************************************************ 
+ * MODELE ET MATERIAU 
+ ************************************************************************ 
+   
+ * CALCUL DES CARACTERISTIQUES 
+   RTUBE = 0.5*DTUBE; 
+   RINT = RTUBE - eTUBE; 
+   DINT = DTUBE - (2.*eTUBE); 
+   S1    = pi * ((RTUBE**2) - (RINT**2)); 
+   Iny1  = pi * ((DTUBE**4) - (DINT**4)) / 64.; 
+   Inx1  = pi * ((DTUBE**4) - (DINT**4)) / 32.; 
+   
+ * MODELE ET MATERIAU 
+   MODTOT = MODE MESHTOT 'MECANIQUE' 'ELASTIQUE' 'ISOTROPE' 'TIMO'; 
+   MATTOT = MATE MODTOT 'YOUN' EY1 'NU' NU1 'RHO' RHO1 
+                        'SECT' S1 'INRY' Iny1 'INRZ' Iny1 'TORS' Inx1; 
+   
+ ************************************************************************ 
+ * MATRICES, CONDITIONS AUX LIMITES 
+ ************************************************************************ 
+   
+   K1 = RIGI MODTOT MATTOT; 
+   M1 = MASS MODTOT MATTOT; 
+   
+ * blocage au sol 
+   BLO1 = BLOQ 'DEPL' 'ROTA' (PSOL1 ET PSOL2); 
+   K1TOT = K1 ET BLO1; 
+   
+ * appui aux PE 
+   BLO2 = BLOQ 'UX' MESHPE; 
+   K2TOT = K1 ET BLO1 ET BLO2; 
+   
+ * Question 1 : 
+ *     Quel type d'éléments est utilisés ? 
+ * -->  Des éléments de type SEG2 (segement à deux neuds lineaire) 
+ *     Cela vous semble-t-il justifié ? 
+ * --> theorie des poutre : 1D. donc éléments de type poutre 
+ *     espace d'évolution 2D : problème à deux dimensions 
+ *     Linéaire bien pour un premier calcul 
+ *     ce ne sont pas des barre (notre problème :travail en flexion) 
+ * 
+ *     Combien d'éléments comporte le maillage fourni ? 
+   NBELTOT = NBEL MESHTOT; 
+   MESS '--> il y a 'NBELTOT 'elements'; 
+ *     Cela vous semble-t-il suffisant ? Comment pourrait-on le savoir ? 
+ * --> Cela me semble suffisant, cependant pour s'en assurer il faudrait faire une étude de convergeance. 
+   
+ * Question 2 : 
+ *     Les points PE1, PE2, ... représentent les plaques entretoises 
+ *     percées. Combien y en a t'il? 
+ * --> Il y en a 2 fois 9 soit 18. 
+ *     On choisit une modélisation de type "appui simple glissant". 
+ *     Quels ddl bloquer ? 
+ * --> BLOQ UY 
+   
+ * Question 3 : 
+ *     Quel est le nom des points positionnés en face des 
+ *     Barres Anti-Vibratoire ? 
+ * --> PBAV1, PBAV2, PBAV3, PBAV4 
+   
+   
+ ************************************************************************ 
+ * CALCUL DES MODES PROPRES 
+ ************************************************************************ 
+   
+ * Calcul des 40 premiers modes propres (base modale appuye aux PE) 
+   NMOD1   = 40; 
+   WSHIFT1 = 1.; 
+   TMOD1 = VIBR 'IRAM' WSHIFT1 NMOD1 K2TOT M1 'TBAS'; 
+   POSTVIBR TMOD1 'mail'; 
+ * POSTVIBR  PROCEDUR  BP208322  17/10/03    21:16:26     9580 
+ *======================================================= 
+ * 
+ * POSTVIBR 
+ * VISUalisation selon le mot cl� : 
+ *   'TABL' : �crit le tableau des donn�es d'une base modale 
+ *   'DEFO' : trac� les deformees modales 
+ *   'DEF0' : trac� du maillage non deforme 
+ *   'VTK'  : sortie du maillage + deformees 
+ *   'LIST' : creation des listchpo des deformees, des listreel des 
+ *            frequences, des masses generalisees... 
+ *   'MAIL' : creation du maillage des point_repere 
+ * creation : BP 06/01/2015 
+ * 
+ *======================================================= 
+   
+   
+ DEBPROC POSTVIBR TBAS1*'TABLE' LMOC1/'LISTMOTS' TOPT1/'TABLE' ; 
+   
+   
+ * TBAS1 : table de type BASE_MODALE ou LIAISONS_STATIQUES 
+ * LMOC1 : mots-cles definissant les actions a produire 
+ * TOPT1 : table d'options contenant : 
+ *       . 'LISTE_MODES' : liste des modes a traiter 
+ *       . 'MAILLAGE'    : maillage sur lequel tracer les deformees 
+ *       . 'TITRE'       : debut de titre lors du trace des deformees 
+ *       . 'FICHIER_VTK' : repertoire + nom de fichier de sortie VTK 
+ *       . 'MAILLAGE_2'  : maillage supplementaire a utiliser (ex: ARET) 
+   
+   
+ * VERIF et RECUP DES DONNEES D'ENTREE ---------------------------------- 
+   
+ * TABLE DES MODES 
+   
+   SI (NON (EXIS TBAS1 'SOUSTYPE')); 
+     MESS 'LA TABLE D ENTREE DOIT AVOIR UN SOUSTYPE !'; 
+     ERRE 21; 
+   FINSI; 
+   FLMODA = EGA TBAS1 . 'SOUSTYPE' 'BASE_MODALE'; 
+   FLSTAT = EGA TBAS1 . 'SOUSTYPE' 'LIAISONS_STATIQUES'; 
+   SI ((NON FLMODA) ET (NON FLSTAT)); 
+     MESS 'LA TABLE D ENTREE DOIT ETRE DE SOUSTYPE '; 
+          'BASE_MODALE ou LIAISONS_STATIQUES !'; 
+     ERRE 21; 
+   FINSI; 
+   
+   SI (FLMODA); 
+     TMOD1 = TBAS1 . 'MODES'; 
+     SI (NEG TMOD1 . 'SOUSTYPE' 'BASE_DE_MODES'); 
+       MESS 'L INDICE MODES DE LA TABLE D ENTREE DOIT ETRE DE SOUSTYPE ' 
+           'BASE_DE_MODES !'; 
+       ERRE 21; 
+     FINSI; 
+     nmod1 = (DIME TMOD1) - 2; 
+   SINON; 
+     TMOD1 = TBAS1; 
+     nmod1 = (DIME TMOD1) - 1; 
+   FINSI; 
+   SI (nmod1 < 1); 
+     MESS 'ABSENCE DE MODES !'; 
+     QUIT  POSTVIBR; 
+   FINSI; 
+   
+   
+ * LISTE DES MOTS-CLES 
+   
+ * valeurs par defaut 
+   SI (NON (EXIS LMOC1)); 
+     LMOC1 = MOTS 'TABL' 'DEFO' 'DEF0' 'MAIL'; 
+   FINSI; 
+   
+ * logiques 
+   FLTABL = EXIS LMOC1 'TABL'; 
+   FLDEFO = EXIS LMOC1 'DEFO'; 
+ * attention DEF0 avec "zero" et pas DEFO avec un "o" 
+   FLDEF0 = EXIS LMOC1 'DEF0'; 
+   FLVTK  = EXIS LMOC1 'VTK'; 
+   FLLIST = EXIS LMOC1 'LIST'; 
+   FLMAIL = EXIS LMOC1 'MAIL'; 
+   FLNOLX = EXIS LMOC1 'NOLX'; 
+   
+   
+ * TABLE DES OPTIONS 
+   
+ * valeurs par defaut 
+   LENT1 = LECT 1 PAS 1 nmod1; 
+   SI (EXIS TMOD1 'MAILLAGE'); 
+     MESH1 = TMOD1 . 'MAILLAGE'; 
+   FINSI; 
+   cha20 = mot ' '; 
+ *   ficvtk = mot 'VTK/DEFORMEE_MODALE'; 
+   ficvtk = mot 'DEFORMEE_MODALE'; 
+   
+ * on recupere tout ce qu'on peut si la table existe vraiment 
+   FLOPT1 = FAUX; 
+   FMESH2 = FAUX; 
+   SI (EXIS TOPT1); FLOPT1 = EGA (TYPE TOPT1) 'TABLE';  FINSI; 
+   SI FLOPT1; 
+     SI (EXIS TOPT1 'LISTE_MODES'); 
+       LENT1 = TOPT1 . 'LISTE_MODES'; 
+     FINSI; 
+     SI (EXIS TOPT1 'MAILLAGE'); 
+       MESH1 = TOPT1 . 'MAILLAGE'; 
+     FINSI; 
+     SI (EXIS TOPT1 'MAILLAGE_2'); 
+       MESH2 = TOPT1 . 'MAILLAGE_2'; 
+       FMESH2 = EGA (TYPE MESH2) 'MAILLAGE'; 
+     FINSI; 
+     SI (EXIS TOPT1 'TITRE'); 
+       cha20 = TOPT1 . 'TITRE'; 
+     FINSI; 
+     SI (EXIS TOPT1 'FICHIER_VTK'); 
+       ficvtk = TOPT1 . 'FICHIER_VTK'; 
+     FINSI; 
+   FINSI; 
+   
+ * eventuelles erreurs 
+   SI (NEG (TYPE LENT1) 'LISTENTI'); 
+     MESS 'VEUILLEZ FOURNIR UN LISTENTI POUR LISTE_MODES !'; ERRE 21; 
+   FINSI; 
+   SI (NEG (TYPE MESH1) 'MAILLAGE'); 
+     MESS 'VEUILLEZ FOURNIR UN MAILLAGE !'; ERRE 21; 
+   FINSI; 
+ * ajout de UNIQ pour le cas des mulitcouches 
+   MESH1 = UNIQ MESH1; 
+   SI (NEG (TYPE cha20) 'MOT'); 
+     MESS 'VEUILLEZ FOURNIR UN MOT POUR TITRE !'; ERRE 21; 
+   FINSI; 
+   SI (NEG (TYPE ficvtk) 'MOT'); 
+     MESS 'VEUILLEZ FOURNIR UN MOT POUR FICHIER_VTK !'; ERRE 21; 
+   FINSI; 
+   
+   
+   
+ * PREPARATION ---------------------------------------------------------- 
+   
+ * recup des noms de composantes 
+   idime  = VALE 'DIME' ; 
+   momode = VALE 'MODE' ; 
+   si (ega idime 3); 
+     modepl = mots  'UX'  'UY'  'UZ'; 
+     modeplI= mots 'IUX' 'IUY' 'IUZ'; 
+   sinon; 
+     si ((ega momode 'AXIS') ou (ega momode 'FOUR')); 
+       modepl = mots  'UR'  'UT'  'UZ'; 
+       modeplI= mots 'IUR' 'IUT' 'IUZ'; 
+     sinon; 
+       modepl = mots  'UX'  'UY' '--'; 
+       modeplI= mots 'IUX' 'IUY' '--'; 
+     finsi; 
+   finsi; 
+   modeplC = modepl et modeplI; 
+   modepl1 = extr modepl  1; 
+   modepl2 = extr modepl  2; 
+   modepl3 = extr modepl  3; 
+   modeplI1= extr modeplI 1; 
+   modeplI2= extr modeplI 2; 
+   modeplI3= extr modeplI 3; 
+   
+ * --- dans le cas TABL --- 
+   SI FLTABL; 
+     SI (FLMODA); 
+       chaline = chai 
+            '+------+--------------+--------------+--------------+' 
+             '---------------------------------------+'; 
+       mess chaline; 
+   
+       MESS '| Mode |  Frequence   |  Masse gen.  | POINT_REPERE |' 
+             '               RESULTANTE               |'; 
+       MESS '|  n�  |     (Hz)     |      M*      |  (ddl ALFA)  |' 
+ *             '      UX           UY           UZ     |'; 
+             '       'modepl1'         'modepl2'         'modepl3'   |'; 
+       mess chaline; 
+     SINON; 
+       chaline = chai 
+            '+------+-------------+----------------+--------------+'; 
+       mess chaline; 
+       MESS '| Ustat|  Deplacement unitaire impose | POINT_REPERE |'; 
+       MESS '|  n�  |     ddl     |      noeud     |  (ddl BETA)  |'; 
+       mess chaline; 
+     FINSI; 
+   FINSI; 
+   
+ * --- dans le cas DEFO --- 
+   SI FLDEFO; 
+   
+ *   calcul d'une longueur caracteristique 
+     si (ega idime 3); 
+       XC0 YC0 ZC0 = COOR MESH1 ; 
+       XA0 = (MAXI XC0) - (MINI XC0) ; 
+       YA0 = (MAXI YC0) - (MINI YC0) ; 
+       ZA0 = (MAXI ZC0) - (MINI ZC0) ; 
+       AMPL0 = ((XA0**2) + (YA0**2) + (ZA0**2))**0.5 ; 
+     sinon; 
+       XC0 YC0 = COOR MESH1 ; 
+       XA0 = (MAXI XC0) - (MINI XC0) ; 
+       YA0 = (MAXI YC0) - (MINI YC0) ; 
+       AMPL0 = ((XA0**2) + (YA0**2))**0.5 ; 
+     finsi; 
+   FINSI; 
+   
+ * --- dans le cas LIST --- 
+   SI FLLIST; 
+     LCHPO1 = SUIT; 
+     LFREQ1 = PROG; 
+     LMGEN1 = PROG; 
+   FINSI; 
+   
+ * --- dans le cas MAIL --- 
+   SI FLMAIL; 
+     MESHAB = MANU 'POI1'; 
+   FINSI; 
+   
+   
+   
+ * BOUCLE SUR LES MODES ---------------------------------- 
+   
+ imod1 = 0; 
+ REPE BMOD1 nmod1; imod1 = imod1 + 1; 
+   
+   
+ * --- RECUP DES DONNEEES DU MODE --- 
+   
+   i1 = extr LENT1 imod1; 
+   SI (NON (EXIS TMOD1 i1)); 
+     ITER BMOD1; 
+   FINSI; 
+   FLI = FAUX; 
+   iux1 = mot '    ---    '; 
+   iuy1 = mot '    ---    '; 
+   iuz1 = mot '    ---    '; 
+   SI (FLMODA); 
+     si (exis TMOD1 . i1   'NUMERO_MODE'); 
+       num1   = TMOD1 . i1 . 'NUMERO_MODE'; 
+     sino; 
+       num1 = i1; 
+     finsi; 
+ *   cas valeur propre complexe 
+     FLCPLX = EXIS TMOD1 . i1 'FREQUENCE_REELLE'; 
+     si FLCPLX; 
+       frq1R  = TMOD1 . i1 . 'FREQUENCE_REELLE'; 
+       mas1R  = TMOD1 . i1 . 'MASSE_GENERALISEE_REELLE'; 
+       phi1R  = TMOD1 . i1 . 'DEFORMEE_MODALE_REELLE'; 
+       frq1I  = TMOD1 . i1 . 'FREQUENCE_IMAGINAIRE'; 
+       mas1I  = TMOD1 . i1 . 'MASSE_GENERALISEE_IMAGINAIRE'; 
+       phi1I  = TMOD1 . i1 . 'DEFORMEE_MODALE_IMAGINAIRE'; 
+       afrq1 = (abs frq1R) + (abs frq1I); 
+       amas1 = (abs mas1R) + (abs mas1I); 
+ *     petite ruse pour l affichage 
+       phi1 = (EXCO phi1R modepl modepl  'NOID' 'NATURE' 'DIFFUS') 
+           et (EXCO phi1I modepl modeplI 'NOID' 'NATURE' 'DIFFUS'); 
+       frq1 =  frq1R; 
+       mas1 =  mas1R; 
+ *   cas valeur propre reelle 
+     sinon; 
+       frq1   = TMOD1 . i1 . 'FREQUENCE'  ; 
+       mas1   = TMOD1 . i1 . 'MASSE_GENERALISEE'; 
+       phi1   = TMOD1 . i1 . 'DEFORMEE_MODALE'; 
+       afrq1 = abs frq1; 
+       amas1 = abs mas1; 
+     finsi; 
+     rphi1  = RESU phi1; 
+     morphi1= EXTR rphi1 'COMP'; 
+     prphi1 = EXTR rphi1 'MAILLAGE'; 
+ *   on verifie la compatibilite des noms d'inconnues 
+     FLPHI1 = ((DIME morphi1) > 0) ET ((NBEL prphi1) > 0); 
+     SI FLPHI1; 
+       prphi1 = prphi1 POIN 'INITIAL'; 
+       ux1    = EXTR rphi1 modepl1 prphi1; 
+       uy1    = EXTR rphi1 modepl2 prphi1; 
+       si (ega modepl3 '--'); uz1    = mot '--'; 
+       sinon;                 uz1    = EXTR rphi1 modepl3 prphi1; 
+       finsi; 
+       si (exis morphi1 modeplI1); 
+         FLI = VRAI;  iux1 = EXTR rphi1 modeplI1 prphi1; 
+       finsi; 
+       si (exis morphi1 modeplI2); 
+         FLI = VRAI;  iuy1 = EXTR rphi1 modeplI2 prphi1; 
+       finsi; 
+       si (exis morphi1 modeplI3); 
+         FLI = VRAI;  iuz1 = EXTR rphi1 modeplI3 prphi1; 
+       finsi; 
+     SINON; 
+       ux1 = mot '    ---    ';   uy1 = ux1;   uz1 = ux1; 
+     FINSI; 
+     OUBL prphi1; DETR rphi1; 
+   SINON; 
+     num1 = i1; 
+     ptl1 = TMOD1 . i1 . 'POINT_LIAISON'; 
+     iptl1 = NOEU ptl1; 
+     ddl1 = TMOD1 . i1 . 'DDL_LIAISON'; 
+     phi1 = TMOD1 . i1 . 'DEFORMEE'; 
+   FINSI; 
+     prep1  = TMOD1 . i1 . 'POINT_REPERE'; 
+     iprep1 = NOEU prep1; 
+   
+ * --- option TABLEAU --- 
+   
+   SI FLTABL; 
+ *   cas base de modes propres 
+     SI (FLMODA); 
+       si ((afrq1 < 10000.) et (afrq1 > 1.E-3)); FMT1 = mot '(F13.4)'; 
+       sinon;                                    FMT1 = mot '(E13.6)'; 
+       finsi; 
+       si ((amas1 < 10000.) et (amas1 > 1.E-3)); FMT2 = mot '(F13.4)'; 
+       sinon;                                    FMT2 = mot '(E13.6)'; 
+       finsi; 
+       FMT3 = mot '(F13.4)'; 
+       cha1 = CHAI '|'              num1   *6    ' |' 
+                       FORMAT FMT1  frq1         ' |' 
+                       FORMAT FMT2  mas1         ' |' 
+                                   iprep1  *50  '  |' 
+                       FORMAT FMT3  ux1 uy1 uz1  ' |'; 
+       mess cha1; 
+ *     cas valeur propre complexe 
+       si FLCPLX; 
+         cha1I = CHAI '|'                ' ' *6      '+i' 
+                         FORMAT FMT1  frq1I         ' |' 
+                         FORMAT FMT2  mas1I        ' |' 
+                                         ' '  *50  '  |' 
+                         FORMAT FMT3 iux1 iuy1 iuz1  ' |'; 
+         mess cha1I; 
+       sinon; 
+ *       composantes complexes 
+         SI FLI; 
+           cha1I = CHAI '|'   ' ' *50  '  |' 
+                         FORMAT FMT3 iux1 iuy1 iuz1  ' |'; 
+           mess cha1I; 
+         FINSI; 
+       finsi; 
+ *   cas base de modes statiques 
+     SINON; 
+       cha1 = CHAI '|'               num1  *6        ' |' 
+                                     ddl1  *17    '    |' 
+                                    iptl1  *32  '      |' 
+                                    iprep1 *50     '   |'; 
+       mess cha1; 
+     FINSI; 
+   FINSI; 
+   
+ * --- option DEFORMEE --- 
+   
+   SI FLDEFO; 
+     AMPU1 = MAXI (EXCO modeplC phi1 'NOID') 'ABS'; 
+     SI (EXIS TMOD1 . i1  'ISOVALEUR'); 
+       UNORM1 = TMOD1 . i1  . 'ISOVALEUR'; 
+       SI (NEG (TYPE UNORM1) 'CHPOINT'); 
+         MESS 'ISOVALEUR du 'i1'eme mode doit etre un CHPOINT !'; 
+         ERRE 21; 
+       FINSI; 
+     SINON; 
+       UNORM1 = (PSCA phi1 phi1 modeplC modeplC)**0.5; 
+       TMOD1 . i1  . 'ISOVALEUR' = UNORM1; 
+     FINSI; 
+     SI (AMPU1 < 1.E-100); 
+       DEFO1 = DEFO MESH1 phi1 UNORM1; 
+     SINON; 
+       XAMP1 = 0.05 * (AMPL0 / AMPU1) ; 
+       DEFO1 = DEFO MESH1 phi1 XAMP1 UNORM1; 
+     FINSI; 
+     SI (FLMODA); 
+       cha2 = CHAI cha20 'Mode ' num1 ' : f=' frq1 'Hz'; 
+     SINON; 
+       cha2 = CHAI cha20 ' Ustat ' num1 ' : ' ddl1 '(#' iptl1 ')=1'; 
+     FINSI; 
+     SI (FLDEF0) ; 
+ *       DEFO1 = (DEFO MESH1 phi1 0 'GRIS' (0.*UNORM1)) et DEFO1; 
+       DEFO1 = (DEFO MESH1 phi1 0 'GRIS') et DEFO1; 
+     FINSI; 
+     SI FMESH2; 
+       TRAC DEFO1 MESH2 'TITRE' cha2; 
+     SINON; 
+       TRAC DEFO1 'TITRE' cha2; 
+     FINSI; 
+   FINSI; 
+   
+ * --- option LISTES --- 
+   
+   SI FLLIST; 
+     LCHPO1 = LCHPO1 et phi1; 
+     LFREQ1 = LFREQ1 et frq1; 
+     SI (FLMODA);  LMGEN1 = LMGEN1 et mas1; FINSI; 
+   FINSI; 
+   
+ * --- option MAILLAGE --- 
+   SI FLMAIL; 
+     MESHAB = MESHAB et prep1; 
+   FINSI; 
+   
+ * --- option NOLX --- 
+   SI FLNOLX; 
+     SI (FLMODA); 
+       TMOD1 . i1 . 'DEFORMEE_MODALE' = phi1 ENLE 'LX'; 
+     SINON; 
+       TMOD1 . i1 . 'DEFORMEE' = phi1 ENLE 'LX'; 
+     FINSI; 
+   FINSI; 
+   
+ * --- option VTK --- 
+   SI FLVTK; 
+     OPTI 'SORT' ficvtk; 
+     SI FLI; 
+       SORT 'VTK'   MESH1 'MAIL' 
+                   (EXCO phi1 modepl)         'DEPL_R' 
+                   (EXCO phi1 modeplI modepl) 'DEPL_I' 
+                   'TEMP' (FLOT i1) ; 
+     SINON; 
+       SORT 'VTK'   MESH1 'MAIL' 
+                   (EXCO phi1 modepl)         'DEPL' 
+                   'TEMP' (FLOT i1) ; 
+     FINSI; 
+   FINSI; 
+   
+ FIN  BMOD1; 
+   
+   
+   SI FLTABL; 
+     mess chaline; 
+   FINSI; 
+   
+   SI FLLIST; 
+     TBAS1 . 'LISTE_DEFORMEES'  = LCHPO1; 
+     TBAS1 . 'LISTE_FREQUENCES' = LFREQ1; 
+     SI (FLMODA);  TBAS1 . 'LISTE_MASSES' = LMGEN1; FINSI; 
+   FINSI; 
+   
+   SI FLMAIL; 
+     TBAS1 . 'MAILLAGE_REPERE'  = MESHAB; 
+   FINSI; 
+   
+ FINPROC; 
