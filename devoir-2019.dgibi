@@ -19,6 +19,7 @@
 * OPTIONS
   OPTI DIME 3 ELEME SEG2 EPSI LINEAIRE;
 *OPTI TRAC PSC EPTR 5 POTR HELVETICA_16;
+*OPTI 'SORT' sortipara;
 
 * GEOMETRIE + CARACTERISTIQUES du TUBE
   H = 10.;
@@ -192,7 +193,8 @@
   NMOD1   = 40;
   WSHIFT1 = 1.;  
   TMOD1 = VIBR 'IRAM' WSHIFT1 NMOD1 K2TOT M1 'TBAS';
-  POSTVIBR TMOD1 'mail';
+  mopost = mots 'TABL' 'VTK';
+  POSTVIBR TMOD1 mopost;
   
 * Question 4: 
 *     Existe-t-il des modes doubles ? Lesquels ?

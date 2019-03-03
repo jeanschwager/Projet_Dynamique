@@ -19,6 +19,7 @@
  * OPTIONS 
    OPTI DIME 3 ELEME SEG2 EPSI LINEAIRE; 
  *OPTI TRAC PSC EPTR 5 POTR HELVETICA_16; 
+ *OPTI 'SORT' sortipara; 
    
  * GEOMETRIE + CARACTERISTIQUES du TUBE 
    H = 10.; 
@@ -192,7 +193,8 @@
    NMOD1   = 40; 
    WSHIFT1 = 1.; 
    TMOD1 = VIBR 'IRAM' WSHIFT1 NMOD1 K2TOT M1 'TBAS'; 
-   POSTVIBR TMOD1 'mail'; 
+   mopost = mots 'TABL' 'VTK'; 
+   POSTVIBR TMOD1 mopost; 
  * POSTVIBR  PROCEDUR  BP208322  17/10/03    21:16:26     9580 
  *======================================================= 
  * 
@@ -624,3 +626,81 @@
    FINSI; 
    
  FINPROC; 
+   
+ * Question 4: 
+ *     Existe-t-il des modes doubles ? Lesquels ? 
+ * --> ... 
+   
+ * Question 5: 
+ *     Classez les 10 premiers modes selon qu'ils sont hors-plan ou plan. 
+ *  +--------+----------------+--------- 
+ *  |  mode  | frequence (Hz) | Plan ou Hors Plan ? 
+ *  +--------+----------------+--------- 
+ *  |    1   |  ...        | ... 
+ *  |    2   |  ...        | ... 
+ *  |    3   |  ...        | ... 
+ *  |    4   |  ...        | ... 
+ *  |    5   |  ...        | ... 
+ *  |    6   |  ...        | ... 
+ *  |    7   |  ...        | ... 
+ *  |    8   |  ...        | ... 
+ *  |    9   |  ...        | ... 
+ *  |   10   |  ...        | ... 
+   
+   
+ * Question 6: 
+ *     Si du fluide au repos avait été présent à l'interieur du tube, 
+ *     quelle caractéristique matériau, aurait-on du modifier ? 
+ * --> ... 
+ *     Comment aurait alors varier les fréquences propres ? 
+ * --> ... 
+   
+   
+ ************************************************************************ 
+ * ANALYSE HARMONIQUE 
+ ************************************************************************ 
+   
+ * Question 7 : 
+ *     Rappelez l'équation d'équilibre dynamique discrétisée 
+ *     en l'absence d'amortissement 
+ * --> ... 
+   
+ * Question 8 : 
+ *     Vu la forme particulière du chargement, donnez l'expression de la 
+ *     solution établie : 
+ * --> u(t) = ... 
+   
+ * Question 9 : 
+ *     Transformez en equation algebrique lineaire 
+ * --> ... 
+   
+ * Question 10 : 
+ *     Calculer l'évolution avec \Omega des réponses aux points PEX1 et 
+ *     PEX2 pour les deux chargements 
+   
+   F0 = 5.; 
+ * chargement harmonique en PEX1 
+   FEX1 = FORC 'FY' F0 PEX1; 
+ * chargement harmonique en PEX2, normal au tube 
+   FEX2 = FORC 'FX' (-1.*F0*(cos TETAEX2)) 
+               'FZ' (-1.*F0*(sin TETAEX2)) PEX2; 
+   
+ * frequences d'excitation 
+   prOMEGHZ = prog 0.1 PAS 0.1 50.; 
+   prOMEG   = 2.*pi * prOMEGHZ; 
+   nOMEG  = DIME prOMEG; 
+ * reponse a FEX1 : 
+ * - au point EX1 selon y 
+     uy1_EX1 = prog; 
+ * - au point EX2 selon y 
+     uy2_EX1 = prog; 
+ * reponse a FEX2 : 
+ * - au point EX1 selon x,z 
+     ux1_EX2 = prog;  uz1_EX2 = prog; 
+ * - au point EX2 selon x,z 
+     ux2_EX2 = prog;  uz2_EX2 = prog; 
+   
+ * boucle sur les frequences d'excitation 
+   REPE BOMEG nOMEG; 
+     OMEG = EXTR ... &BOMEG; 
+ fin; 

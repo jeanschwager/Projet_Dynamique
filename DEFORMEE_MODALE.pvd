@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!-- PROGRAMME=CASTEM/SORVTK   UTILISATEUR=Windows   DATE=03/03/2019   TITRE=DEFORMEE_MODALE -->
+<VTKFile type="Collection" version="0.1">
+    <Collection>
+        <DataSet timestep="  0.100000E+01" file="DEFORMEE_MODALE.0001.vtu"/>
+        <DataSet timestep="  0.200000E+01" file="DEFORMEE_MODALE.0002.vtu"/>
+        <DataSet timestep="  0.300000E+01" file="DEFORMEE_MODALE.0003.vtu"/>
+        <DataSet timestep="  0.400000E+01" file="DEFORMEE_MODALE.0004.vtu"/>
+        <DataSet timestep="  0.500000E+01" file="DEFORMEE_MODALE.0005.vtu"/>
+        <DataSet timestep="  0.600000E+01" file="DEFORMEE_MODALE.0006.vtu"/>
+        <DataSet timestep="  0.700000E+01" file="DEFORMEE_MODALE.0007.vtu"/>
+        <DataSet timestep="  0.800000E+01" file="DEFORMEE_MODALE.0008.vtu"/>
+        <DataSet timestep="  0.900000E+01" file="DEFORMEE_MODALE.0009.vtu"/>
+        <DataSet timestep="  0.100000E+02" file="DEFORMEE_MODALE.0010.vtu"/>
+        <DataSet timestep="  0.110000E+02" file="DEFORMEE_MODALE.0011.vtu"/>
+        <DataSet timestep="  0.120000E+02" file="DEFORMEE_MODALE.0012.vtu"/>
+        <DataSet timestep="  0.130000E+02" file="DEFORMEE_MODALE.0013.vtu"/>
+        <DataSet timestep="  0.140000E+02" file="DEFORMEE_MODALE.0014.vtu"/>
+        <DataSet timestep="  0.150000E+02" file="DEFORMEE_MODALE.0015.vtu"/>
+        <DataSet timestep="  0.160000E+02" file="DEFORMEE_MODALE.0016.vtu"/>
+        <DataSet timestep="  0.170000E+02" file="DEFORMEE_MODALE.0017.vtu"/>
+        <DataSet timestep="  0.180000E+02" file="DEFORMEE_MODALE.0018.vtu"/>
+        <DataSet timestep="  0.190000E+02" file="DEFORMEE_MODALE.0019.vtu"/>
+        <DataSet timestep="  0.200000E+02" file="DEFORMEE_MODALE.0020.vtu"/>
+        <DataSet timestep="  0.210000E+02" file="DEFORMEE_MODALE.0021.vtu"/>
+        <DataSet timestep="  0.220000E+02" file="DEFORMEE_MODALE.0022.vtu"/>
+        <DataSet timestep="  0.230000E+02" file="DEFORMEE_MODALE.0023.vtu"/>
+        <DataSet timestep="  0.240000E+02" file="DEFORMEE_MODALE.0024.vtu"/>
+        <DataSet timestep="  0.250000E+02" file="DEFORMEE_MODALE.0025.vtu"/>
+        <DataSet timestep="  0.260000E+02" file="DEFORMEE_MODALE.0026.vtu"/>
+        <DataSet timestep="  0.270000E+02" file="DEFORMEE_MODALE.0027.vtu"/>
+        <DataSet timestep="  0.280000E+02" file="DEFORMEE_MODALE.0028.vtu"/>
+        <DataSet timestep="  0.290000E+02" file="DEFORMEE_MODALE.0029.vtu"/>
+        <DataSet timestep="  0.300000E+02" file="DEFORMEE_MODALE.0030.vtu"/>
+        <DataSet timestep="  0.310000E+02" file="DEFORMEE_MODALE.0031.vtu"/>
+        <DataSet timestep="  0.320000E+02" file="DEFORMEE_MODALE.0032.vtu"/>
+        <DataSet timestep="  0.330000E+02" file="DEFORMEE_MODALE.0033.vtu"/>
+        <DataSet timestep="  0.340000E+02" file="DEFORMEE_MODALE.0034.vtu"/>
+        <DataSet timestep="  0.350000E+02" file="DEFORMEE_MODALE.0035.vtu"/>
+        <DataSet timestep="  0.360000E+02" file="DEFORMEE_MODALE.0036.vtu"/>
+        <DataSet timestep="  0.370000E+02" file="DEFORMEE_MODALE.0037.vtu"/>
+        <DataSet timestep="  0.380000E+02" file="DEFORMEE_MODALE.0038.vtu"/>
+        <DataSet timestep="  0.390000E+02" file="DEFORMEE_MODALE.0039.vtu"/>
+        <DataSet timestep="  0.400000E+02" file="DEFORMEE_MODALE.0040.vtu"/>
+    </Collection>
+</VTKFile>

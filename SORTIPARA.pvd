@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<!-- PROGRAMME=CASTEM/SORVTK   UTILISATEUR=Windows   DATE=02/03/2019   TITRE=SORTIPARA -->
+<VTKFile type="Collection" version="0.1">
+    <Collection>
+        <DataSet part="0001" file="SORTIPARA.0001.vtu"/>
+    </Collection>
+</VTKFile>
