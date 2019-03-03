@@ -271,9 +271,9 @@
 
 * boucle sur les frequences d'excitation  
   REPE BOMEG nOMEG;
-    OMEG = EXTR ... &BOMEG;
+    OMEG = EXTR prOMEG &BOMEG;
     mess 'calcul pour OMEG='OMEG'rad/s';
-    ZHARM1 = K2TOT ET ... ; 
+    ZHARM1 = K2TOT ET (-1*(OMEG**2)*M1) ; 
 *   reponse a FEX1 :
     UHARM1 = RESO ZHARM1 FEX1;
     uy1_EX1 = uy1_EX1 ET (EXTR UHARM1 'UY' PEX1);
@@ -328,9 +328,9 @@
 ************************************************************************
 
 * parametres temporels
-  wmax = (2.*pi*...); 
-  DTc  = ...;
-  DTe  = ...;
+  wmax = (2.*pi*100); 
+  DTc  = 2./wmax;
+  DTe  = DTc/20.;
   MESS 'dtc=' DTc ' --> dt=' DTe;
   tfin = 2.1;
   NPASe = (ENTI PROCH (tfin / DTe)) - 1;
@@ -345,7 +345,7 @@
   OMEGHZ = 15.4;
   FEX1_P = PJBA FEX1 TMOD1;
   pr_time = PROG 0. 'PAS' DTe 30.;
-  evex1  = EVOL MANU pr_time (sin (... * OMEGHZ * pr_time));
+  evex1  = EVOL MANU pr_time (sin (((2*pi*OMEGHZ)*180)/pi * pr_time));
   CHA1_P = CHAR FEX1_P evex1;
   TCHAR = TABL 'CHARGEMENT';
   TCHAR .'BASE_A' = CHA1_P;
@@ -353,7 +353,7 @@
 
 * Question 13 : 
 *     Combien de périodes de chargement ?
-  nPERIOD = ...;
+  nPERIOD = 3.;
 * -->  ...
   dess evex1 XBOR 0. 0.2;
   
@@ -390,7 +390,7 @@
   
 * Question 17 : 
 *     Calculez la transformée de Fourier du déplacement en PEX1 selon Y  
-  p= ...;
+  p= (LOG (tfin/DTe))/(LOG 2);
   p = ENTI 'INFERIEUR' p;
   TFuy1 = EXTR (TFR evuy1 p 'MOPH' 'FMAX' 50. 'BLEU') 'COUR' 'MODULE';
   dess TFuy1 'LOGY';
@@ -426,7 +426,7 @@
   evuy1c = EXTR evuy1 'APRE' (0.5*tfin);
   TITRE (chai 'DYNE - Calcul lineaire - \Dt = 'DTe's - tfin=' tfin 's');
   dess evuy1c;
-  p= ...;
+  p = (LOG (tfin/DTe))/(LOG 2);;
   p = ENTI 'INFERIEUR' (p - 1.);
   TFuy1c = EXTR (TFR evuy1c p 'MOPH' 'FMAX' 50. 'BLEU') 'COUR' 'MODULE';
   dess TFuy1c 'LOGY';
@@ -457,28 +457,28 @@
   TL1 = TABL 'LIAISON_ELEMENTAIRE';
   TL1.'TYPE_LIAISON'        =  MOT 'POINT_PLAN' ;
   TL1.'SUPPORT' = PBAV2;
-  TL1.'NORMALE' = ... ;
+  TL1.'NORMALE' = (0. -1. 0.) ;
   TL1.'RAIDEUR' = 1.E5;
   TL1.'JEU'     = 0.5E-3;
 * liaison BAV2- :  
   TL2 = TABL 'LIAISON_ELEMENTAIRE';
   TL2.'TYPE_LIAISON'        =  MOT 'POINT_PLAN' ;
   TL2.'SUPPORT' = PBAV2;
-  TL2.'NORMALE' = ... ;
+  TL2.'NORMALE' = (0. 1. 0.);
   TL2.'RAIDEUR' = 1.E5;
   TL2.'JEU'     = 0.5E-3;
 * liaison BAV3+ :
   TL3 = TABL 'LIAISON_ELEMENTAIRE';
   TL3.'TYPE_LIAISON'        =  MOT 'POINT_PLAN' ;
   TL3.'SUPPORT' = PBAV3;
-  TL3.'NORMALE' = ... ;
+  TL3.'NORMALE' = (0. -1. 0.) ;
   TL3.'RAIDEUR' = 1.E5;
   TL3.'JEU'     = 0.5E-3;
 * liaison BAV3- :  
   TL3 = TABL 'LIAISON_ELEMENTAIRE';
   TL3.'TYPE_LIAISON'        =  MOT 'POINT_PLAN' ;
   TL3.'SUPPORT' = PBAV3;
-  TL3.'NORMALE' = ... ;
+  TL3.'NORMALE' = (0. 1. 0.) ;
   TL3.'RAIDEUR' = 1.E5;
   TL3.'JEU'     = 0.5E-3;
   
@@ -521,7 +521,7 @@ REPE BDTe 2;
 * on recupere la partie [14.95-29.9]s  
   evuy1NLc = EXTR evuy1NL 'APRE' (0.5*tfin);
 * on fait la transformee de Fourier sur les dernieres 14.95 s
-  TFuy1NLc = EXTR (TFR ... p 'MOPH' 'FMAX' 50. 'VIOL')
+  TFuy1NLc = EXTR (TFR evuy1NLc p 'MOPH' 'FMAX' 50. 'VIOL')
   'COUR' 'MODULE';
   dess (TFuy1c et TFuy1NLc) 'LOGY';
   
