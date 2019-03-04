@@ -312,7 +312,7 @@
 * --> ils se situent certaines fréquences propres des modes hors plan mais pas tous.
 *Les modes hors plan non présent correspondent avec des modes ou le point de sollicitation est un noeud de vibration. Cela entraine une impossibilité de soliitation de la structure.
 *     pour le second ?
-* --> Ils se situent aux fréquences des modes Plans. On peut cependant observer que certains points restent immobiles selon des directions à certaines rfréquences exemple : le déplacement suivant z au point PEX1 pour le premier mode est nul car c'est un noed de vibration sur cet axe.
+* --> Ils se situent aux fréquences des modes Plans. On peut cependant observer que certains points restent immobiles selon des directions à certaines fréquences exemple : le déplacement suivant z au point PEX1 pour le premier mode plan est nul car c'est un noed de vibration sur cet axe.
 *     Expliquez les éventuelles différences
 * --> Pour le premier chargement on ne peut pas observer tous les modes de vibration. en effet le choix des points est important.
 
@@ -542,17 +542,17 @@ FIN BDTe  ;
 
 * Question 21 : 
 *     Que constatez-vous ?
-* --> ...
+* --> Les résultats différents, les vibration de forte amplitude du début on disapraru. cela permet de "diffuser" les vibrations dans le temps.
 *     Le mouvement vous semble t'il periodique ?
-*     ...
+*     Oui le mouvement est periodique. Il possède de nombreuses fréquences.
 
 * Question 22 : 
 *     Recommencez avec un pas de temps divise par 8
 *     La réponse est-elle la meme ?
-* --> ...
+* --> Oui la réponse est la même
 * --> ...
 *     Que concluez-vous sur le choix du pas de temps ?
-* --> ...
+* --> Notre premier pas de temps était suffisament petit.
 
 
 opti trac X donn 5; 
