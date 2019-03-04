@@ -1,4 +1,3 @@
-
 ************************************************************************
 *         MASTER MS2 5AG17 : DYNAMIQUE DES STRUCTURES II               *
 *                     DEVOIR PERSONNEL                                 *
@@ -8,20 +7,18 @@
 *    AUX DIMENSIONS ET CARACTERISTIQUES FICTIVES                       *
 *    (Benoit Prabel, CEA,DEN,DM2S,SEMT,DYN)                            *
 *                                                                      *
-* PRENOM, NOM : Jean SCHWAGER                                          *
-* NUMERO D'ETUDIANT : 3303438                                          *
+* PRENOM, NOM : JOSEPH MOMPLOT                                         *
+* NUMERO D'ETUDIANT : 3102395                                          *
 *                                                                      *
 ************************************************************************
 
 ************************************************************************
 * OPTIONS ET PARAMETRES
-***********************************************************************
+************************************************************************
 
 * OPTIONS
   OPTI DIME 3 ELEME SEG2 EPSI LINEAIRE;
-*OPTI TRAC PSC EPTR 5 POTR HELVETICA_16;
-*OPTI 'SORT' sortipara;
-
+  OPTI TRAC PSC EPTR 5 POTR HELVETICA_16;
 * GEOMETRIE + CARACTERISTIQUES du TUBE
   H = 10.;
   R = 1.5;
@@ -30,6 +27,7 @@
   EY1   = 2.E11;
   NU1   = 0.3;
   RHO1  = 8000.;
+
   
 * nombre de plaques entretoises par branche
   NPE   = 9;
@@ -123,8 +121,6 @@
   MESHTOT = MESH1 ET MESH3 ET (INVE MESH2);
   EYE3D = 60. -130. 90.;
   TRAC EYE3D (MESHTOT ET MESHPE ET MESHBAV);
-  
-  
 ************************************************************************
 * MODELE ET MATERIAU
 ************************************************************************
@@ -135,7 +131,7 @@
   DINT = DTUBE - (2.*eTUBE); 
   S1    = pi * ((RTUBE**2) - (RINT**2));
   Iny1  = pi * ((DTUBE**4) - (DINT**4)) / 64.;
-  Inx1  = pi * ((DTUBE**4) - (DINT**4)) / 32.;
+  Inx1  = 2 * pi * ((DTUBE**4) - (DINT**4)) / 64. ; 
   
 * MODELE ET MATERIAU
   MODTOT = MODE MESHTOT 'MECANIQUE' 'ELASTIQUE' 'ISOTROPE' 'TIMO';
@@ -159,31 +155,33 @@
      
 * Question 1 : 
 *     Quel type d'éléments est utilisés ? 
-* -->  Des éléments de type SEG2 (segement à deux neuds lineaire)
+* --> On utilise ici des elements SEG2 
 *     Cela vous semble-t-il justifié ? 
-* --> theorie des poutre : 1D. donc éléments de type poutre
-*     espace d'évolution 3D : problème à trois dimensions
-*     Linéaire bien pour un premier calcul
-*     ce ne sont pas des barre (notre problème :travail en flexion)
-*     
+* --> Cela semble justifie car on va modeliser des poutres
 *     Combien d'éléments comporte le maillage fourni ? 
-  NBELTOT = NBEL MESHTOT;
-  MESS '--> il y a 'NBELTOT 'elements';
+* On affiche le maillage et on regarde directement le nombre d'elements
+*  NBEL = 494;
+*  NBELTOT = NBEL ;
+*  MESS '--> il y a 'NBELTOT 'elements';
 *     Cela vous semble-t-il suffisant ? Comment pourrait-on le savoir ?
-* -->Pour créer le maillage l'opérateur DENS est utilisé. La géométrie est construite tel qu'il y ai 20 éléments entre deux plaques. Cela me semble suffisant, cependant pour s'en assurer il faudrait faire une étude de convergeance. 
-
+* --> il y a DZ/DENS1 = 20 elements entre PSOL1 et PE1 donc entre 2 
+* points sur MESH1 et MESH2, pour l'instant cela semble assez. Pour le 
+* savoir on peut faire un test simple sur la structure type traction/
+* compression, faire varier le nombre d'elements et regarder a partir 
+* de quel nombre d'element on a une convergence de la solution 
 * Question 2 : 
 *     Les points PE1, PE2, ... représentent les plaques entretoises 
 *     percées. Combien y en a t'il?
-* --> Il y en a 9 (deux points par plaque exemple : PE1 et PE18 appartiennent à la même plaque).
+* --> Il y a NPE*2=18 plaques entretoises 
 *     On choisit une modélisation de type "appui simple glissant". 
 *     Quels ddl bloquer ?
-* --> BLOQ UX UY. On bloc UX et UY, déplacement celon UZ libre : c'est un appui simple glissant suivant Z.
-
+* --> On laisse libre le deplacement selon Z et on bloque les    
+*     deplacements en X et en Y. 
 * Question 3 : 
 *     Quel est le nom des points positionnés en face des 
 *     Barres Anti-Vibratoire ?
-* --> PBAV1, PBAV2, PBAV3, PBAV4
+* --> Les points en face des barres anti-vibratoires sont les points 
+* PBAV1, PBAV2, PBAV3, PBAV4
 
   
 ************************************************************************
@@ -194,36 +192,39 @@
   NMOD1   = 40;
   WSHIFT1 = 1.;  
   TMOD1 = VIBR 'IRAM' WSHIFT1 NMOD1 K2TOT M1 'TBAS';
-  mopost = mots 'TABL' 'VTK';
-  POSTVIBR TMOD1 mopost;
+  POSTVIBR TMOD1;
   
 * Question 4: 
 *     Existe-t-il des modes doubles ? Lesquels ?
-* --> ...
-
+* --> Il existe des modes doubles, c'est à dire des modes avec une 
+* meme frequence propre. C'est le cas des modes 2-3, 4-5, 6-7, 8-9, 
+* 14-15, 16-17, 18-19, 20-21, 22-23, 24-25, 28-29, 32-33, 34-35, 
+* 38-39 
 * Question 5: 
 *     Classez les 10 premiers modes selon qu'ils sont hors-plan ou plan.
 *  +--------+----------------+---------
 *  |  mode  | frequence (Hz) | Plan ou Hors Plan ?
 *  +--------+----------------+---------
-*  |    1   |  1.6535        | Hors Plan
-*  |    2   |  3.4545        | Plan
-*  |    3   |  4.2367        | Hors Plan
-*  |    4   |  9.7731        | Plan
-*  |    5   |  10.1076       | Hors Plan
-*  |    6   |  18.9272       | Hors Plan
-*  |    7   |  18.9923       | Plan
-*  |    8   |  29.6556       | Hors Plan
-*  |    9   |  29.8684       | Plan
-*  |   10   |  41.8109       | Hors plan
+*  |    1   |  1.6174     | Hors Plan
+*  |    2   |  3.4545     | Plan
+*  |    3   |  3.9793     | Hors Plan
+*  |    4   |  9.3798     | Hors Plan
+*  |    5   |  9.7731     | Plan
+*  |    6   |  18.1565    | Hors Plan
+*  |    7   |  18.9923    | Plan
+*  |    8   |  28.9826    | Hors Plan
+*  |    9   |  29.8684    | Plan
+*  |   10   |  40.9424    | Hors Plan
 
  
 * Question 6: 
 *     Si du fluide au repos avait été présent à l'interieur du tube,
 *     quelle caractéristique matériau, aurait-on du modifier ?
-* --> Il faudrait changer le module d'inertie en prenant en compte les deux masses volumiques avec notre tube creux et le cylindre de liquide à l'interieur du tube.
+* --> On aurait du modifier la masse volumique du materiau 
 *     Comment aurait alors varier les fréquences propres ?
-* --> la masse volumique global du tube augmentant les fréquences propres vont donc diminuer car elles sont proportionnelles à (C/rho)^0.5.
+* --> si on augmente rho, la celerite des ondes c=(E/rho)^1/2 aurait 
+* diminuee, donc pulsations propres plus petites donc modes propres plus 
+* petits 
 
  
 ************************************************************************
@@ -233,17 +234,18 @@
 * Question 7 : 
 *     Rappelez l'équation d'équilibre dynamique discrétisée 
 *     en l'absence d'amortissement
-* -->  M(d^2u/dt^2)+Ku(t)=F(t)
-
+* --> M(d^2u/dt^2)+Ku(t)=F(t)
 * Question 8 : 
 *     Vu la forme particulière du chargement, donnez l'expression de la
 *     solution établie :
-* --> u(t) = u(t) = A_i sin(Omega t)
+* --> u(t) = A_i sin(\Omega t)
 
 * Question 9 : 
 *     Transformez en equation algebrique lineaire
-* --> -M*A_i*Omega^2 + K*A_i = F0
-
+*     d^2u/dt^2 = -A_i \Omega^2 sin(\Omega t)
+*     l'equation devient : 
+* --> -M*A_i*\Omega^2 + K*A_i = F(t)/sin(\Omega t)
+* --> -M*A_i*\Omega^2 + K*A_i = F0
 * Question 10 : 
 *     Calculer l'évolution avec \Omega des réponses aux points PEX1 et
 *     PEX2 pour les deux chargements
@@ -306,25 +308,33 @@
   dess (evx1_EX2 et evx2_EX2 et evz1_EX2 et evz2_EX2)'LOGY' LEGE;
   dess (evy1_EX1 et evy2_EX1 et evx1_EX2 et evx2_EX2 et evz1_EX2
      et evz2_EX2)'LOGY' LEGE;
+
+*OPTI DONN 5;
+
      
 * Question 11 : 
 *     Où se situent les pics de résonance pour le premier chargement ? 
-* --> ils se situent certaines fréquences propres des modes hors plan mais pas tous.
-*Les modes hors plan non présent correspondent avec des modes ou le point de sollicitation est un noeud de vibration. Cela entraine une impossibilité de soliitation de la structure.
+* --> 3 pics de résonnance : 2,5 Hz ; 10 Hz ; 30 Hz 
 *     pour le second ?
-* --> Ils se situent aux fréquences des modes Plans. On peut cependant observer que certains points restent immobiles selon des directions à certaines rfréquences exemple : le déplacement suivant z au point PEX1 pour le premier mode est nul car c'est un noed de vibration sur cet axe.
+* --> 5 pics de raisonnance : 4 Hz ; 10 Hz ; 20 Hz ; 30 Hz ; 42 Hz
 *     Expliquez les éventuelles différences
-* --> Pour le premier chargement on ne peut pas observer tous les modes de vibration. en effet le choix des points est important.
+* --> Difference en fonction des modes vus plus haut, certains sont 
+* dans le plan et d'autre hors plan, etant donne qu'on a un chargement
+* selon Y (hors plan) et un chargement dans le plan (X,Z), les pics de 
+* raisonnance ne sont donc pas les mêmes en fonction du chargement 
+* considere.
 
 * Question 12 : 
 *     Est-il possible de donner immédiatement la réponse au chargement
 *     combiné F^1(t)+F^2(t) ? Justifiez.
-* --> Dans ce cas oui car les chargements sont "indépendant" les un des autres de part leur orthogonalité
+* --> Possible en superposant les deux graph correspondant aux 
+*     chargement, c'est ce qui est fait dans le troisième dessin
 *     Cela aurait-il été possible si les deux chargements n'étaient pas
 *     orthogonaux ?
-* --> Non, les sollicitation interfereraient entre elles.
-
-
+* --> Pas possible si les deux chargements ne sont pas orthogonaux, il 
+*     aurait fallut faire une résoulution avec les deux chargement 
+*     additionnés. 
+*opti donn 5;
 ************************************************************************
 * ANALYSE LINEAIRE PAR INTEGRATION TEMPORELLE SUR BASE MODALE
 ************************************************************************
@@ -337,39 +347,40 @@
   tfin = 2.1;
   NPASe = (ENTI PROCH (tfin / DTe)) - 1;
   NSORT = 2;
-
+*OPTI DONN 5;
 * amortissement (en % ici)
   xi1 = 5.;
   TAMOR = TABL 'AMORTISSEMENT';
   TAMOR . 'AMORTISSEMENT' = AMOR TMOD1 (prog NMOD1*xi1);
-  
+
 * chargement  
   OMEGHZ = 15.4;
   FEX1_P = PJBA FEX1 TMOD1;
-  pr_time = PROG 0. 'PAS' DTe 30.;
+  pr_time = PROG 0. 'PAS' DTe 30;
   evex1  = EVOL MANU pr_time (sin (((2*pi*OMEGHZ)*180)/pi * pr_time));
   CHA1_P = CHAR FEX1_P evex1;
   TCHAR = TABL 'CHARGEMENT';
   TCHAR .'BASE_A' = CHA1_P;
-*   TCHAR .'BASE_A' = CHA1_P et CHA2_P;
+*  TCHAR .'BASE_A' = CHA1_P et CHA2_P;
 
 * Question 13 : 
 *     Combien de périodes de chargement ?
-  nPERIOD = 3.;
+  nPERIOD = 3. ;
 * -->  ...
   dess evex1 XBOR 0. 0.2;
-  
+
 * Question 14 : 
 *     Quel type de schéma utilise \verb|DYNE| ? 
-* --> ...
+* --> DYNE utilise les différences centrées 
 *     Est-il explicite ou implicite ?
-* --> ...
+* --> Schéma explicite 
 *     Existe t-il une condition de stabilité ? Si oui, laquelle ?
-* --> ...
+* --> Schéma stable si wmax*DTe < = 2. 
 
 * Question 15 : 
 *     Choisissez un pas de temps de calcul en le justifiant.
-* --> ...    
+* --> Le pas de temps de calcul doit etre inferieur au pas de temps 
+* critique DTc, on peut donc choisir DTe = 1./10*wmax    
        
 * Question 16 : 
 *      Réalisez le calcul et visualisez les évolutions temporelles
@@ -389,14 +400,16 @@
 
   TITRE (chai 'DYNE - Calcul lineaire - \Dt = 'DTe's - tfin=' tfin 's');
   dess (evux1 et evux2 et evuy1 et evuy2 et evuz1 et evuz2) XBOR 0. 2.;
+
   
 * Question 17 : 
-*     Calculez la transformée de Fourier du déplacement en PEX1 selon Y  
+*     Calculez la transformée de Fourier du déplacement en PEX1 selon Y 
   p= (LOG (tfin/DTe))/(LOG 2);
   p = ENTI 'INFERIEUR' p;
   TFuy1 = EXTR (TFR evuy1 p 'MOPH' 'FMAX' 50. 'BLEU') 'COUR' 'MODULE';
   dess TFuy1 'LOGY';
-*
+
+
 * Question 17 : 
 * --> interpretation des pics :
 * --> ... Hz : ...
@@ -406,7 +419,7 @@
 
 * Question 18 : 
 *     Pourquoi n'y a t'il pas qu'1 seul pic et 1 seule harmonique ?
-* --> ...
+* --> On ne regarde l'évolution du système sur un temps assez long
 
 
 * Question 19 : 
@@ -414,7 +427,7 @@
 *     et post-traitez le déplacement en PEX1 selon Y 
 *     (temporel + transformee de Fourier). 
 *     Que constatez-vous ?
-* --> ...
+* --> On a un seul pic 
 
   tfin = 29.9;
   NPASe = (ENTI PROCH (tfin / DTe)) - 1;
@@ -539,9 +552,9 @@ FIN BDTe  ;
 
 * Question 21 : 
 *     Que constatez-vous ?
-* --> ...
+* --> Calcul très long a réaliser 
 *     Le mouvement vous semble t'il periodique ?
-*     ...
+* --> Mouvement pas périodique
 
 * Question 22 : 
 *     Recommencez avec un pas de temps divise par 8
@@ -550,7 +563,6 @@ FIN BDTe  ;
 * --> ...
 *     Que concluez-vous sur le choix du pas de temps ?
 * --> ...
-
 
 opti trac X donn 5; 
 *FIN ;
