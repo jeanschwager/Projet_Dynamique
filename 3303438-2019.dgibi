@@ -20,7 +20,6 @@
 * OPTIONS
   OPTI DIME 3 ELEME SEG2 EPSI LINEAIRE;
   OPTI TRAC PSC EPTR 5 POTR HELVETICA_16;
-*OPTI 'SORT' sortipara;
 
 * GEOMETRIE + CARACTERISTIQUES du TUBE
   H = 10.;
@@ -159,7 +158,7 @@
      
 * Question 1 : 
 *     Quel type d'éléments est utilisés ? 
-* -->  Des éléments de type SEG2 (segement à deux neuds lineaire)
+* -->  Des éléments de type SEG2 (segment à deux neuds lineaire)
 *     Cela vous semble-t-il justifié ? 
 * --> theorie des poutre : 1D. donc éléments de type poutre
 *     espace d'évolution 3D : problème à trois dimensions
@@ -169,8 +168,9 @@
 *     Combien d'éléments comporte le maillage fourni ? 
   NBELTOT = NBEL MESHTOT;
   MESS '--> il y a 'NBELTOT 'elements';
+*	494 éléments
 *     Cela vous semble-t-il suffisant ? Comment pourrait-on le savoir ?
-* -->Pour créer le maillage l'opérateur DENS est utilisé. La géométrie est construite tel qu'il y ai 20 éléments entre deux plaques. Cela me semble suffisant, cependant pour s'en assurer il faudrait faire une étude de convergeance. 
+* -->Pour créer le maillage l'opérateur DENS est utilisé. La géométrie est construite tel qu'il y ait 20 éléments entre deux plaques. Cela me semble suffisant, cependant pour s'en assurer il faudrait faire une étude de convergeance. 
 
 * Question 2 : 
 *     Les points PE1, PE2, ... représentent les plaques entretoises 
