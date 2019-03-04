@@ -637,24 +637,24 @@
  *  +--------+----------------+--------- 
  *  |  mode  | frequence (Hz) | Plan ou Hors Plan ? 
  *  +--------+----------------+--------- 
- *  |    1   |  ...        | ... 
- *  |    2   |  ...        | ... 
- *  |    3   |  ...        | ... 
- *  |    4   |  ...        | ... 
- *  |    5   |  ...        | ... 
- *  |    6   |  ...        | ... 
- *  |    7   |  ...        | ... 
- *  |    8   |  ...        | ... 
- *  |    9   |  ...        | ... 
- *  |   10   |  ...        | ... 
+ *  |    1   |  1.6535        | Hors Plan 
+ *  |    2   |  3.4545        | Plan 
+ *  |    3   |  4.2367        | Hors Plan 
+ *  |    4   |  9.7731        | Plan 
+ *  |    5   |  10.1076       | Hors Plan 
+ *  |    6   |  18.9272       | Hors Plan 
+ *  |    7   |  18.9923       | Plan 
+ *  |    8   |  29.6556       | Hors Plan 
+ *  |    9   |  29.8684       | Plan 
+ *  |   10   |  41.8109       | Hors plan 
    
    
  * Question 6: 
  *     Si du fluide au repos avait été présent à l'interieur du tube, 
  *     quelle caractéristique matériau, aurait-on du modifier ? 
- * --> ... 
+ * --> Il faudrait changer le module d'inertie en prenant en compte les deux masses volumiques avec notre tube creux et le cylindre de liquide à l'interieur du tube. 
  *     Comment aurait alors varier les fréquences propres ? 
- * --> ... 
+ * --> la masse volumique global du tube augmentant les fréquences propres vont donc diminuer car elles sont proportionnelles à (C/rho)^0.5. 
    
    
  ************************************************************************ 
@@ -664,16 +664,16 @@
  * Question 7 : 
  *     Rappelez l'équation d'équilibre dynamique discrétisée 
  *     en l'absence d'amortissement 
- * --> ... 
+ * -->  M(d^2u/dt^2)+Ku(t)=F(t) 
    
  * Question 8 : 
  *     Vu la forme particulière du chargement, donnez l'expression de la 
  *     solution établie : 
- * --> u(t) = ... 
+ * --> u(t) = u(t) = A_i sin(Omega t) 
    
  * Question 9 : 
  *     Transformez en equation algebrique lineaire 
- * --> ... 
+ * --> -M*A_i*Omega^2 + K*A_i = F0 
    
  * Question 10 : 
  *     Calculer l'évolution avec \Omega des réponses aux points PEX1 et 
@@ -736,3 +736,199 @@
    dess (evy1_EX1 et evy2_EX1) 'LOGY' LEGE; 
    dess (evx1_EX2 et evx2_EX2 et evz1_EX2 et evz2_EX2)'LOGY' LEGE; 
    dess (evy1_EX1 et evy2_EX1 et evx1_EX2 et evx2_EX2 et evz1_EX2 
+      et evz2_EX2)'LOGY' LEGE; 
+   
+ * Question 11 : 
+ *     Où se situent les pics de résonance pour le premier chargement ? 
+ * --> ils se situent certaines fréquences propres des modes hors plan mais pas tous. 
+ *Les modes hors plan non présent correspondent avec des modes ou le point de sollicitation est un noeud de vibration. Cela entraine une impossibilité de soliitation de la structure. 
+ *     pour le second ? 
+ * --> Ils se situent aux fréquences des modes Plans. On peut cependant observer que certains points restent immobiles selon des directions à certaines rfréquences exemple : le déplacement suivant z au point PEX1 pour le premier mode est nul car c'est un noed de vibration sur cet axe. 
+ *     Expliquez les éventuelles différences 
+ * --> Pour le premier chargement on ne peut pas observer tous les modes de vibration. en effet le choix des points est important. 
+   
+ * Question 12 : 
+ *     Est-il possible de donner immédiatement la réponse au chargement 
+ *     combiné F^1(t)+F^2(t) ? Justifiez. 
+ * --> Dans ce cas oui car les chargements sont "indépendant" les un des autres de part leur orthogonalité 
+ *     Cela aurait-il été possible si les deux chargements n'étaient pas 
+ *     orthogonaux ? 
+ * --> Non, les sollicitation interfereraient entre elles. 
+   
+   
+ ************************************************************************ 
+ * ANALYSE LINEAIRE PAR INTEGRATION TEMPORELLE SUR BASE MODALE 
+ ************************************************************************ 
+   
+ * parametres temporels 
+   wmax = (2.*pi*100); 
+   DTc  = 2./wmax; 
+   DTe  = DTc/20.; 
+   MESS 'dtc=' DTc ' --> dt=' DTe; 
+   tfin = 2.1; 
+   NPASe = (ENTI PROCH (tfin / DTe)) - 1; 
+   NSORT = 2; 
+   
+ * amortissement (en % ici) 
+   xi1 = 5.; 
+   TAMOR = TABL 'AMORTISSEMENT'; 
+   TAMOR . 'AMORTISSEMENT' = AMOR TMOD1 (prog NMOD1*xi1); 
+   
+ * chargement 
+   OMEGHZ = 15.4; 
+   FEX1_P = PJBA FEX1 TMOD1; 
+   pr_time = PROG 0. 'PAS' DTe 30.; 
+   evex1  = EVOL MANU pr_time (sin (((2*pi*OMEGHZ)*180)/pi * pr_time)); 
+   CHA1_P = CHAR FEX1_P evex1; 
+   TCHAR = TABL 'CHARGEMENT'; 
+   TCHAR .'BASE_A' = CHA1_P; 
+ *   TCHAR .'BASE_A' = CHA1_P et CHA2_P; 
+   
+ * Question 13 : 
+ *     Combien de périodes de chargement ? 
+   nPERIOD = 3.; 
+ * -->  3 
+   dess evex1 XBOR 0. 0.2; 
+   
+ * Question 14 : 
+ *     Quel type de schéma utilise \verb|DYNE| ? 
+ * --> Le schéma au différences finies centrées 
+ *     Est-il explicite ou implicite ? 
+ * --> explicite 
+ *     Existe t-il une condition de stabilité ? Si oui, laquelle ? 
+ * --> Schéma stable si wmax*DTe < = 2. 
+   
+ * Question 15 : 
+ *     Choisissez un pas de temps de calcul en le justifiant. 
+ * --> Le pas de temps de calcul doit etre inferieur au pas de temps 
+ * critique DTc, on peut donc choisir DTe = 1./10*wmax 
+   
+ * Question 16 : 
+ *      Réalisez le calcul et visualisez les évolutions temporelles 
+ * --------------------------------------------- 
+ * resolution par DYNE 
+   TRESU = DYNE 'DIFFERENCES_CENTREES' 
+           TMOD1 TAMOR TCHAR NPASe DTe NSORT; 
+ * --------------------------------------------- 
+   
+ * post traitement 
+   evux1 = EVOL 'ROUG' RECO TRESU TMOD1 'DEPL' PEX1 'UX'; 
+   evux2 = EVOL 'ORAN' RECO TRESU TMOD1 'DEPL' PEX2 'UX'; 
+   evuy1 = EVOL 'BLEU' RECO TRESU TMOD1 'DEPL' PEX1 'UY'; 
+   evuy2 = EVOL 'AZUR' RECO TRESU TMOD1 'DEPL' PEX2 'UY'; 
+   evuz1 = EVOL 'VERT' RECO TRESU TMOD1 'DEPL' PEX1 'UZ'; 
+   evuz2 = EVOL 'TURQ' RECO TRESU TMOD1 'DEPL' PEX2 'UZ'; 
+   
+   TITRE (chai 'DYNE - Calcul lineaire - \Dt = 'DTe's - tfin=' tfin 's'); 
+   dess (evux1 et evux2 et evuy1 et evuy2 et evuz1 et evuz2) XBOR 0. 2.; 
+   
+ * Question 17 : 
+ *     Calculez la transformée de Fourier du déplacement en PEX1 selon Y 
+   p= (LOG (tfin/DTe))/(LOG 2); 
+   p = ENTI 'INFERIEUR' p; 
+   TFuy1 = EXTR (TFR evuy1 p 'MOPH' 'FMAX' 50. 'BLEU') 'COUR' 'MODULE'; 
+   dess TFuy1 'LOGY'; 
+ * 
+ * Question 17 : 
+ * --> interpretation des pics : 
+ * --> 1.65 Hz : Ce premier pic correspond à la sollicitation du premier mode de vibration hors plan. 
+ *--> 10.10Hz : ce deuxième pic correspond au troisième mode au plan, le deuxième n'étant pas solicitable en PEX1. on remarque que son amplitude est plus petite. 
+ *--> 15.4Hz : ce troisième pic correspond a la sollicitation appliqué à la structure. 
+ * 
+ * --> les modes qui ne repondent pas sont : 
+ * --> Les modes plan ainsi que les modes ou PEX1 est un noeud de vibration. Les modes après 15Hz sont amortis. 
+   
+ * Question 18 : 
+ *     Pourquoi n'y a t'il pas qu'1 seul pic et 1 seule harmonique ? 
+ * --> La strucutre n'est pas excité à une fréquence propre. 
+   
+   
+ * Question 19 : 
+ *     Recommencez le calcul avec tfin=29.9 (ci-après) 
+ *     et post-traitez le déplacement en PEX1 selon Y 
+ *     (temporel + transformee de Fourier). 
+ *     Que constatez-vous ? 
+ * --> On ne voit plus que la fréquence d'excitation. 
+   
+   tfin = 29.9; 
+   NPASe = (ENTI PROCH (tfin / DTe)) - 1; 
+ * --------------------------------------------- 
+ * resolution par DYNE 
+   TRESU = DYNE 'DIFFERENCES_CENTREES' TMOD1 TAMOR TCHAR 
+           NPASe DTe NSORT; 
+ * --------------------------------------------- 
+   evuy1 = EVOL 'BLEU' RECO TRESU TMOD1 'DEPL' PEX1 'UY'; 
+ * on recupere la partie [14.95-29.9]s 
+   evuy1c = EXTR evuy1 'APRE' (0.5*tfin); 
+   TITRE (chai 'DYNE - Calcul lineaire - \Dt = 'DTe's - tfin=' tfin 's'); 
+   dess evuy1c; 
+   p = (LOG (tfin/DTe))/(LOG 2);; 
+   p = ENTI 'INFERIEUR' (p - 1.); 
+   TFuy1c = EXTR (TFR evuy1c p 'MOPH' 'FMAX' 50. 'BLEU') 'COUR' 'MODULE'; 
+   dess TFuy1c 'LOGY'; 
+   
+   
+   
+ ************************************************************************ 
+ * ANALYSE NON-LINEAIRE PAR INTEGRATION TEMPORELLE 
+ ************************************************************************ 
+   
+ * On etudie la reponse avec chocs sur les Barres AntiVibratoires 2 et 3 
+ * Les vibrations du cintre sont limitees par la presence de BAV de part 
+ * et d'autre du cintre. 
+ * vue de dessus : 
+ *  Y 
+ *   |      ___BAV2+       ___BAV3+ 
+ *   | 
+ *      -----+--------------+----- cintre      --> X 
+ *         PBAV2          PBAV3 
+ *          ___            ___ 
+ *             BAV2-          BAV3- 
+ * 
+ * On utilise l'operateur DYNE 
+ * Question 20 : 
+ *       Complétez la definition de la condition unilaterale de choc 
+   
+ * liaison BAV2+ : 
+   TL1 = TABL 'LIAISON_ELEMENTAIRE'; 
+   TL1.'TYPE_LIAISON'        =  MOT 'POINT_PLAN' ; 
+   TL1.'SUPPORT' = PBAV2; 
+   TL1.'NORMALE' = (0. -1. 0.) ; 
+   TL1.'RAIDEUR' = 1.E5; 
+   TL1.'JEU'     = 0.5E-3; 
+ * liaison BAV2- : 
+   TL2 = TABL 'LIAISON_ELEMENTAIRE'; 
+   TL2.'TYPE_LIAISON'        =  MOT 'POINT_PLAN' ; 
+   TL2.'SUPPORT' = PBAV2; 
+   TL2.'NORMALE' = (0. 1. 0.); 
+   TL2.'RAIDEUR' = 1.E5; 
+   TL2.'JEU'     = 0.5E-3; 
+ * liaison BAV3+ : 
+   TL3 = TABL 'LIAISON_ELEMENTAIRE'; 
+   TL3.'TYPE_LIAISON'        =  MOT 'POINT_PLAN' ; 
+   TL3.'SUPPORT' = PBAV3; 
+   TL3.'NORMALE' = (0. -1. 0.) ; 
+   TL3.'RAIDEUR' = 1.E5; 
+   TL3.'JEU'     = 0.5E-3; 
+ * liaison BAV3- : 
+   TL3 = TABL 'LIAISON_ELEMENTAIRE'; 
+   TL3.'TYPE_LIAISON'        =  MOT 'POINT_PLAN' ; 
+   TL3.'SUPPORT' = PBAV3; 
+   TL3.'NORMALE' = (0. 1. 0.) ; 
+   TL3.'RAIDEUR' = 1.E5; 
+   TL3.'JEU'     = 0.5E-3; 
+   
+   TLIA_B = TABL 'LIAISON_B'; 
+   TLIA_B . 1 = TL1; 
+   TLIA_B . 2 = TL2; 
+   TLIA_B . 3 = TL3; 
+   TLIA_B . 4 = TL4; 
+   TLIAI = TABL LIAISON; 
+   TLIAI . 'LIAISON_B' = TLIA_B; 
+   
+ * sortie 
+   TSORLB = TABL 'LIAISON_B'; 
+   TSORLB . TL1 = VRAI; 
+   TSORLB . TL2 = VRAI; 
+   TSORT = TABL 'SORTIE'; 
+   TSORT . 'LIAISON_B' = TSORLB; 

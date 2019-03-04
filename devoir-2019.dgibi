@@ -356,20 +356,21 @@
 * Question 13 : 
 *     Combien de périodes de chargement ?
   nPERIOD = 3.;
-* -->  ...
+* -->  3
   dess evex1 XBOR 0. 0.2;
   
 * Question 14 : 
 *     Quel type de schéma utilise \verb|DYNE| ? 
-* --> ...
+* --> Le schéma au différences finies centrées
 *     Est-il explicite ou implicite ?
-* --> ...
+* --> explicite
 *     Existe t-il une condition de stabilité ? Si oui, laquelle ?
-* --> ...
+* --> Schéma stable si wmax*DTe < = 2. 
 
 * Question 15 : 
 *     Choisissez un pas de temps de calcul en le justifiant.
-* --> ...    
+* --> Le pas de temps de calcul doit etre inferieur au pas de temps 
+* critique DTc, on peut donc choisir DTe = 1./10*wmax    
        
 * Question 16 : 
 *      Réalisez le calcul et visualisez les évolutions temporelles
@@ -399,14 +400,16 @@
 *
 * Question 17 : 
 * --> interpretation des pics :
-* --> ... Hz : ...
+* --> 1.65 Hz : Ce premier pic correspond à la sollicitation du premier mode de vibration hors plan.
+*--> 10.10Hz : ce deuxième pic correspond au troisième mode au plan, le deuxième n'étant pas solicitable en PEX1. on remarque que son amplitude est plus petite.
+*--> 15.4Hz : ce troisième pic correspond a la sollicitation appliqué à la structure. 
 *
 * --> les modes qui ne repondent pas sont :
-* --> ...
+* --> Les modes plan ainsi que les modes ou PEX1 est un noeud de vibration. Les modes après 15Hz sont amortis.
 
 * Question 18 : 
 *     Pourquoi n'y a t'il pas qu'1 seul pic et 1 seule harmonique ?
-* --> ...
+* --> La strucutre n'est pas excité à une fréquence propre.
 
 
 * Question 19 : 
@@ -414,7 +417,7 @@
 *     et post-traitez le déplacement en PEX1 selon Y 
 *     (temporel + transformee de Fourier). 
 *     Que constatez-vous ?
-* --> ...
+* --> On ne voit plus que la fréquence d'excitation.
 
   tfin = 29.9;
   NPASe = (ENTI PROCH (tfin / DTe)) - 1;
